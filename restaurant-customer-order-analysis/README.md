@@ -1,4 +1,4 @@
-# Restaurant Order Intelligence (SQL)
+# Restaurant Customer Order Analysis
 
 ## Overview
 End-to-end SQL analytics project analyzing restaurant orders, members, and menu data to support revenue growth, customer retention, and menu optimization. The project builds a normalized relational schema, performs data quality validation, and produces business-ready analytics consumed in Tableau dashboards.
@@ -11,7 +11,7 @@ End-to-end SQL analytics project analyzing restaurant orders, members, and menu 
 - Which meal combinations are most frequently purchased together?
 
 ## Data
-- **Source:** Kaggle — Restaurant Members and Orders dataset
+- **Source:** Kaggle (Restaurant Members and Orders dataset)
 - **Core entities:** orders, order details, restaurants, members, meals, meal types, serve types, cities
 - **Schema design:**
   - Normalized relational model with fact tables (`orders`, `order_details`)
@@ -50,5 +50,4 @@ End-to-end SQL analytics project analyzing restaurant orders, members, and menu 
   - Frequently Bought-Together Meal Pairs
 
 ## Tech Stack
-SQL (PostgreSQL-style) · Relational Data Modeling · Analytical SQL · Window Functions · Tableau
-
+SQL (PostgreSQL) · Relational Data Modeling · Analytical SQL · Window Functions · Tableau
