@@ -7,7 +7,7 @@ End-to-end classification of mushroom edibility using categorical physical attri
 - Can physical mushroom characteristics reliably predict whether a mushroom is edible or poisonous, and can dimensionality reduction preserve predictive performance?
 
 ## Data
-- **Source:** UCI Mushroom Dataset (via Kaggle)
+- **Source:** UCI Machine Learning Repository (Mushroom dataset)
 - **Rows:** 8,124 observations
 - **Features:** 22 categorical attributes
 - **Target:** `class` (e = edible, p = poisonous)
