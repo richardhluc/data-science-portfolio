@@ -1,0 +1,692 @@
+# -----------------------------------------------------------
+# SOCIOECONOMIC HEALTH INSURANCE ANALYSIS
+# -----------------------------------------------------------
+# Goal: Explore how income, education, and homeownership relate to
+# primary health insurance coverage using BRFSS 2021 data.
+#
+# Business questions:
+# - How is primary health insurance coverage distributed in the population?
+# - How do income, education, and home arrangement differ across insurance types?
+# - Are there statistically significant associations between coverage and
+#   socioeconomic factors?
+# - Can we predict primary insurance type from income, education, and home status?
+#
+# Key Tasks:
+#   1. Clean and recode BRFSS variables into interpretable categories.
+#   2. Describe distributions and associations among:
+#        - Primary insurance (PRIMINSR)
+#        - Income (INCOME3)
+#        - Education (EDUCA)
+#        - Homeownership / rental status (RENTHOM1)
+#   3. Test associations using chi-square.
+#   4. Build multinomial logistic regression models to predict
+#      primary insurance type.
+#   5. Benchmark predictions using a Random Forest classifier
+#      and evaluate variable importance.
+#   6. Visualize predicted probabilities by income.
+#
+# Tools: R, tidyverse, ggplot2, psych, lsr, nnet, car, broom, randomForest
+# Dataset: CDC (BRFSS 2021 dataset)
+
+# ---------- LOAD LIBRARIES ----------
+
+library(tidyverse)
+library(psych)
+library(lsr)
+library(ggplot2)
+library(nnet)
+library(car)
+library(broom)
+library(randomForest)
+
+# Reproducibility
+set.seed(42)
+
+# ---------- PROJECT SETUP ----------
+
+# Project root
+project_dir <- getwd()
+
+fig_dir     <- file.path(project_dir, "figures")
+models_dir  <- file.path(project_dir, "models")
+outputs_dir <- file.path(project_dir, "outputs")
+
+if (!dir.exists(fig_dir))     dir.create(fig_dir, recursive = TRUE)
+if (!dir.exists(models_dir))  dir.create(models_dir, recursive = TRUE)
+if (!dir.exists(outputs_dir)) dir.create(outputs_dir, recursive = TRUE)
+
+save_plot <- function(filename, width = 8, height = 5, dpi = 300) {
+  ggsave(
+    filename = file.path(fig_dir, filename),
+    width    = width,
+    height   = height,
+    dpi      = dpi
+  )
+}
+
+# ---------- LOAD DATA ----------
+
+# Load health dataset
+data_path <- file.path(project_dir, "health_data.csv")
+brf <- readr::read_csv(data_path)
+head(brf)
+
+# ---------- DATA CLEANING & VARIABLE SELECTION ----------
+
+# Here we:
+# - Inspect overall missingness
+# - Keep only variables needed for this project
+# - Filter to valid code ranges
+# - Recode integers to descriptive factor labels
+
+# Overall missingness snapshot
+na_summary <- colSums(is.na(brf))
+na_percent <- colSums(is.na(brf)) / nrow(brf) * 100
+
+na_summary
+na_percent
+
+# Save missingness summary (outputs)
+missingness_tbl <- tibble(
+  variable        = names(na_percent),
+  percent_missing = round(as.numeric(na_percent), 2)
+)
+
+readr::write_csv(
+  missingness_tbl,
+  file.path(outputs_dir, "missingness_summary_brfss.csv")
+)
+
+# Keep only variables needed for this analysis
+brf <- brf |>
+  select(INCOME3, EDUCA, PRIMINSR, RENTHOM1)
+
+# Quick initial frequency checks
+table(brf$INCOME3,  useNA = "ifany")
+table(brf$PRIMINSR, useNA = "ifany")
+table(brf$EDUCA,    useNA = "ifany")
+table(brf$RENTHOM1, useNA = "ifany")
+
+# Filter to valid code ranges (drop missing / invalid categories)
+brf <- brf |>
+  filter(
+    INCOME3  %in% 1:11,
+    PRIMINSR %in% c(1:10, 88),
+    EDUCA    %in% 1:6,
+    RENTHOM1 %in% 1:3
+  )
+
+# Recode to descriptive factor labels
+brf$INCOME3 <- factor(
+  brf$INCOME3,
+  levels = 1:11,
+  labels = c(
+    "Less than $10,000",
+    "$10,000 to < $15,000",
+    "$15,000 to < $20,000",
+    "$20,000 to < $25,000",
+    "$25,000 to < $35,000",
+    "$35,000 to < $50,000",
+    "$50,000 to < $75,000",
+    "$75,000 to < $100,000",
+    "$100,000 to < $150,000",
+    "$150,000 to < $200,000",
+    "$200,000 or more"
+  )
+)
+
+brf$PRIMINSR <- factor(
+  brf$PRIMINSR,
+  levels = c(1:10, 88),
+  labels = c(
+    "Employer-Based", "Private", "Medicare", "Medigap",
+    "Medicaid", "CHIP", "Military", "Indian Health",
+    "State", "Other", "None"
+  )
+)
+
+brf$EDUCA <- factor(
+  brf$EDUCA,
+  levels = 1:6,
+  labels = c(
+    "Never/Only Kindergarten",
+    "Grades 1-8",
+    "Grades 9-11",
+    "Grades 12/GED",
+    "College 1-3 Years",
+    "College 4+ Years"
+  )
+)
+
+brf$RENTHOM1 <- factor(
+  brf$RENTHOM1,
+  levels = 1:3,
+  labels = c("Own", "Rent", "Other")
+)
+
+# Confirm NAs removed from key variables
+sum(is.na(brf$INCOME3))
+sum(is.na(brf$PRIMINSR))
+sum(is.na(brf$EDUCA))
+sum(is.na(brf$RENTHOM1))
+
+# Updated frequencies to verify recoding
+table(brf$INCOME3)
+table(brf$PRIMINSR)
+table(brf$EDUCA)
+table(brf$RENTHOM1)
+
+# Save simple frequency outputs (outputs)
+readr::write_csv(
+  brf |> count(INCOME3, sort = TRUE),
+  file.path(outputs_dir, "freq_income_levels.csv")
+)
+readr::write_csv(
+  brf |> count(EDUCA, sort = TRUE),
+  file.path(outputs_dir, "freq_education_levels.csv")
+)
+readr::write_csv(
+  brf |> count(RENTHOM1, sort = TRUE),
+  file.path(outputs_dir, "freq_home_arrangement.csv")
+)
+readr::write_csv(
+  brf |> count(PRIMINSR, sort = TRUE),
+  file.path(outputs_dir, "freq_primary_insurance.csv")
+)
+
+# ---------- EXPLORATORY DATA ANALYSIS (EDA) ----------
+
+# Goal: Understand distributions and high-level patterns in coverage and
+# socioeconomic factors.
+
+# --- UNIVARIATE DISTRIBUTIONS (COUNTS OF RESPONDENTS) ---
+
+p_ins_dist <- ggplot(brf, aes(x = fct_infreq(PRIMINSR))) +
+  geom_bar(fill = "firebrick") +
+  coord_flip() +
+  labs(
+    title = "Distribution of Primary Health Insurance",
+    x     = "Primary Insurance Type",
+    y     = "Count of respondents"
+  ) +
+  theme_minimal()
+
+p_income_dist <- ggplot(brf, aes(x = INCOME3)) +
+  geom_bar(fill = "steelblue") +
+  coord_flip() +
+  labs(
+    title = "Distribution of Household Income",
+    x     = "Income Level (categorical, USD)",
+    y     = "Count of respondents"
+  ) +
+  theme_minimal()
+
+p_educ_dist <- ggplot(brf, aes(x = EDUCA)) +
+  geom_bar(fill = "darkgreen") +
+  coord_flip() +
+  labs(
+    title = "Distribution of Education Levels",
+    x     = "Education Level",
+    y     = "Count of respondents"
+  ) +
+  theme_minimal()
+
+p_home_dist <- ggplot(brf, aes(x = RENTHOM1)) +
+  geom_bar(fill = "goldenrod") +
+  coord_flip() +
+  labs(
+    title = "Distribution of Home Arrangements",
+    x     = "Home Arrangement",
+    y     = "Count of respondents"
+  ) +
+  theme_minimal()
+
+p_ins_dist;    save_plot("dist_primary_insurance.png")
+p_income_dist; save_plot("dist_income_levels.png")
+p_educ_dist;   save_plot("dist_education_levels.png")
+p_home_dist;   save_plot("dist_home_arrangements.png")
+
+# --- BIVARIATE: INSURANCE VS SOCIOECONOMIC FACTORS (PROPORTIONS) ---
+
+p_ins_by_income <- ggplot(brf, aes(x = INCOME3, fill = PRIMINSR)) +
+  geom_bar(position = "fill") +
+  coord_flip() +
+  labs(
+    title = "Primary Insurance by Income Level",
+    x     = "Income Level (categorical, USD)",
+    y     = "Proportion of respondents",
+    fill  = "Primary Insurance"
+  ) +
+  theme_minimal()
+
+p_ins_by_educ <- ggplot(brf, aes(x = EDUCA, fill = PRIMINSR)) +
+  geom_bar(position = "fill") +
+  coord_flip() +
+  labs(
+    title = "Primary Insurance by Education Level",
+    x     = "Education Level",
+    y     = "Proportion of respondents",
+    fill  = "Primary Insurance"
+  ) +
+  theme_minimal()
+
+p_ins_by_home <- ggplot(brf, aes(x = RENTHOM1, fill = PRIMINSR)) +
+  geom_bar(position = "fill") +
+  coord_flip() +
+  labs(
+    title = "Primary Insurance by Home Arrangement",
+    x     = "Home Arrangement",
+    y     = "Proportion of respondents",
+    fill  = "Primary Insurance"
+  ) +
+  theme_minimal()
+
+p_ins_by_income; save_plot("primary_insurance_by_income.png")
+p_ins_by_educ;   save_plot("primary_insurance_by_education.png")
+p_ins_by_home;   save_plot("primary_insurance_by_home_arrangement.png")
+
+# --- HEATMAP-STYLE VIEW: INSURANCE × EDUCATION, FACETED BY HOME STATUS ---
+
+p_heat <- ggplot(brf, aes(x = EDUCA, y = PRIMINSR, fill = INCOME3)) +
+  geom_tile() +
+  facet_wrap(~ RENTHOM1) +
+  labs(
+    title = "Education, Income, and Primary Insurance by Home Arrangement",
+    x     = "Education Level",
+    y     = "Primary Insurance Type",
+    fill  = "Income Level"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1),
+    plot.title  = element_text(
+      hjust  = 0,
+      size   = 12,
+      face   = "bold",
+      margin = ggplot2::margin(t = 0, r = 0, b = 10, l = 0)
+    )
+  )
+
+p_heat
+save_plot("heatmap_education_income_insurance_by_home.png", width = 10, height = 6)
+
+# ---------- DESCRIPTIVE STATISTICS & ASSOCIATIONS ----------
+
+# Modes for each variable
+mode_PRIMINSR <- modeOf(brf$PRIMINSR)
+mode_INCOME3  <- modeOf(brf$INCOME3)
+mode_EDUCA    <- modeOf(brf$EDUCA)
+mode_RENTHOM1 <- modeOf(brf$RENTHOM1)
+
+mode_PRIMINSR
+mode_INCOME3
+mode_EDUCA
+mode_RENTHOM1
+
+# Simple proportion tables
+PRIMINSR_prop <- brf |>
+  count(PRIMINSR) |>
+  mutate(prop = round(n / sum(n), 4))
+
+INCOME3_prop <- brf |>
+  count(INCOME3) |>
+  mutate(prop = round(n / sum(n), 4))
+
+EDUCA_prop <- brf |>
+  count(EDUCA) |>
+  mutate(prop = round(n / sum(n), 4))
+
+RENTHOM1_prop <- brf |>
+  count(RENTHOM1) |>
+  mutate(prop = round(n / sum(n), 4))
+
+PRIMINSR_prop
+INCOME3_prop
+EDUCA_prop
+RENTHOM1_prop
+
+# Save proportion tables (outputs)
+readr::write_csv(
+  PRIMINSR_prop,
+  file.path(outputs_dir, "primary_insurance_proportions.csv")
+)
+readr::write_csv(
+  INCOME3_prop,
+  file.path(outputs_dir, "income_proportions.csv")
+)
+readr::write_csv(
+  EDUCA_prop,
+  file.path(outputs_dir, "education_proportions.csv")
+)
+readr::write_csv(
+  RENTHOM1_prop,
+  file.path(outputs_dir, "home_arrangement_proportions.csv")
+)
+
+# Chi-square tests: insurance vs each socioeconomic factor
+CT_P_R <- table(brf$PRIMINSR, brf$RENTHOM1)
+CT_P_I <- table(brf$PRIMINSR, brf$INCOME3)
+CT_P_E <- table(brf$PRIMINSR, brf$EDUCA)
+
+chi_test_P_R <- chisq.test(CT_P_R)
+chi_test_P_I <- chisq.test(CT_P_I)
+chi_test_P_E <- chisq.test(CT_P_E)
+
+chi_test_P_R
+chi_test_P_I
+chi_test_P_E
+
+# Save chi-square summaries (outputs)
+chi_tbl <- tibble(
+  test = c("Insurance x Home", "Insurance x Income", "Insurance x Education"),
+  statistic = c(unname(chi_test_P_R$statistic), unname(chi_test_P_I$statistic), unname(chi_test_P_E$statistic)),
+  df        = c(unname(chi_test_P_R$parameter), unname(chi_test_P_I$parameter), unname(chi_test_P_E$parameter)),
+  p_value   = c(chi_test_P_R$p.value, chi_test_P_I$p.value, chi_test_P_E$p.value)
+)
+
+readr::write_csv(
+  chi_tbl,
+  file.path(outputs_dir, "chi_square_tests_summary.csv")
+)
+
+# Save raw contingency tables (outputs)
+readr::write_csv(
+  as.data.frame(CT_P_R),
+  file.path(outputs_dir, "contingency_insurance_by_home.csv")
+)
+readr::write_csv(
+  as.data.frame(CT_P_I),
+  file.path(outputs_dir, "contingency_insurance_by_income.csv")
+)
+readr::write_csv(
+  as.data.frame(CT_P_E),
+  file.path(outputs_dir, "contingency_insurance_by_education.csv")
+)
+
+# ---------- MULTINOMIAL LOGISTIC REGRESSION ----------
+
+# Set intuitive reference categories for interpretation
+brf$PRIMINSR <- relevel(brf$PRIMINSR, ref = "None")
+brf$INCOME3  <- relevel(brf$INCOME3,  ref = "Less than $10,000")
+brf$EDUCA    <- relevel(brf$EDUCA,    ref = "Never/Only Kindergarten")
+brf$RENTHOM1 <- relevel(brf$RENTHOM1, ref = "Other")
+
+# Fit models with different predictor combinations
+model1 <- multinom(PRIMINSR ~ INCOME3 + EDUCA, data = brf, trace = FALSE)
+model2 <- multinom(PRIMINSR ~ INCOME3 + RENTHOM1, data = brf, trace = FALSE)
+model3 <- multinom(PRIMINSR ~ EDUCA   + RENTHOM1, data = brf, trace = FALSE)
+model4 <- multinom(PRIMINSR ~ INCOME3 + EDUCA + RENTHOM1, data = brf, trace = FALSE)
+
+# Null (intercept-only) model for pseudo-R² calculation
+model_null <- multinom(PRIMINSR ~ 1, data = brf, trace = FALSE)
+
+# Helper to compute McFadden pseudo-R²
+pseudo_r2 <- function(mod, null_mod) {
+  1 - (mod$deviance / null_mod$deviance)
+}
+
+# Compare models by AIC, deviance, pseudo-R²
+model_compare <- tibble(
+  model     = c("Model 1: Income + Educ",
+                "Model 2: Income + Home",
+                "Model 3: Educ + Home",
+                "Model 4: Income + Educ + Home"),
+  AIC       = c(AIC(model1), AIC(model2), AIC(model3), AIC(model4)),
+  deviance  = c(model1$deviance, model2$deviance, model3$deviance, model4$deviance),
+  pseudo_R2 = c(
+    pseudo_r2(model1, model_null),
+    pseudo_r2(model2, model_null),
+    pseudo_r2(model3, model_null),
+    pseudo_r2(model4, model_null)
+  )
+) |>
+  arrange(AIC)
+
+model_compare
+
+# Save model comparison (outputs)
+readr::write_csv(
+  model_compare,
+  file.path(outputs_dir, "multinomial_model_comparison.csv")
+)
+
+# Choose the best model (lowest AIC)
+best_model <- model4
+
+# Coefficients, odds ratios, and multicollinearity check
+summary(best_model)
+exp(coef(best_model))
+vif(best_model)
+
+# ---------- MODEL PERFORMANCE & PREDICTED CLASSES ----------
+
+pred_probs <- predict(best_model, type = "probs")
+pred_class <- colnames(pred_probs)[max.col(pred_probs)]
+
+brf_predictions <- brf |>
+  mutate(
+    pred_PRIMINSR = factor(pred_class, levels = levels(PRIMINSR))
+  )
+
+conf_matrix <- table(
+  Actual    = brf_predictions$PRIMINSR,
+  Predicted = brf_predictions$pred_PRIMINSR
+)
+
+conf_matrix
+
+overall_accuracy <- mean(brf_predictions$PRIMINSR == brf_predictions$pred_PRIMINSR)
+overall_accuracy
+
+# Save multinomial confusion matrix + accuracy (outputs)
+readr::write_csv(
+  as.data.frame(conf_matrix),
+  file.path(outputs_dir, "multinomial_confusion_matrix.csv")
+)
+
+perf_summary <- tibble(
+  overall_accuracy = round(overall_accuracy, 3)
+)
+
+readr::write_csv(
+  perf_summary,
+  file.path(outputs_dir, "multinomial_model_performance.csv")
+)
+
+# ---------- PREDICTED PROBABILITY BY INCOME ----------
+
+ref_grid <- expand_grid(
+  INCOME3  = levels(brf$INCOME3),
+  EDUCA    = factor("College 4+ Years", levels = levels(brf$EDUCA)),
+  RENTHOM1 = factor("Own", levels = levels(brf$RENTHOM1))
+)
+
+ref_probs <- predict(best_model, newdata = ref_grid, type = "probs") |>
+  as.data.frame()
+
+ref_plot_df <- ref_grid |>
+  bind_cols(ref_probs) |>
+  pivot_longer(
+    cols      = colnames(ref_probs),
+    names_to  = "InsuranceType",
+    values_to = "Prob"
+  )
+
+key_types <- c("Employer-Based", "Medicare", "Medicaid", "None")
+
+ref_plot_df_key <- ref_plot_df |>
+  filter(InsuranceType %in% key_types)
+
+p_pred_probs_income <- ggplot(
+  ref_plot_df_key,
+  aes(
+    x     = INCOME3,
+    y     = Prob,
+    color = InsuranceType,
+    group = InsuranceType
+  )
+) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 1.5) +
+  coord_flip() +
+  labs(
+    title = "Predicted Probability of Insurance Type by Income\n(Ref: College 4+ Years, Own Home)",
+    x     = "Income Level (categorical, USD)",
+    y     = "Predicted Probability (0–1)",
+    color = "Insurance Type"
+  ) +
+  theme_minimal()
+
+p_pred_probs_income
+save_plot("predicted_insurance_probs_by_income.png", width = 9, height = 6)
+
+# Save the plotted probabilities dataset (outputs)
+readr::write_csv(
+  ref_plot_df_key,
+  file.path(outputs_dir, "predicted_probs_by_income_reference_profile.csv")
+)
+
+# ---------- SAVE BEST MODEL & DEMO PREDICTIONS ----------
+
+model_path <- file.path(models_dir, "socioeconomic_insurance_best_multinom.rds")
+saveRDS(best_model, file = model_path)
+
+cat("\nSaved best multinomial insurance model to:", model_path, "\n")
+
+demo_sample <- brf |>
+  dplyr::slice_sample(n = 5)
+
+demo_probs <- predict(best_model, newdata = demo_sample, type = "probs") |>
+  as.data.frame()
+
+demo_pred_class <- colnames(demo_probs)[max.col(as.matrix(demo_probs))]
+
+demo_results <- demo_sample |>
+  dplyr::mutate(
+    actual_insurance    = PRIMINSR,
+    predicted_insurance = factor(demo_pred_class, levels = levels(PRIMINSR))
+  ) |>
+  dplyr::select(
+    INCOME3,
+    EDUCA,
+    RENTHOM1,
+    actual_insurance,
+    predicted_insurance
+  )
+
+cat("\nDemo predictions (sample respondents):\n")
+print(demo_results)
+
+# Save demo predictions (outputs)
+readr::write_csv(
+  demo_results,
+  file.path(outputs_dir, "demo_predictions_multinomial.csv")
+)
+
+cat("\n--------------- OVERALL MULTINOMIAL MODEL PERFORMANCE ---------------\n")
+print(perf_summary)
+cat("\nConfusion matrix (Actual vs Predicted primary insurance):\n")
+print(conf_matrix)
+cat("\n(All figures saved in the 'figures' folder.)\n")
+
+# -------------------------------------------------------------------
+# RANDOM FOREST CLASSIFIER FOR PRIMARY INSURANCE
+# -------------------------------------------------------------------
+
+rf_data <- brf |>
+  select(PRIMINSR, INCOME3, EDUCA, RENTHOM1) |>
+  drop_na() |>
+  mutate(
+    PRIMINSR = droplevels(PRIMINSR)
+  )
+
+set.seed(42)
+
+# Simple train/test split (80/20)
+n         <- nrow(rf_data)
+train_idx <- sample(seq_len(n), size = floor(0.8 * n))
+rf_train  <- rf_data[train_idx, ]
+rf_test   <- rf_data[-train_idx, ]
+
+rf_model <- randomForest(
+  PRIMINSR ~ INCOME3 + EDUCA + RENTHOM1,
+  data       = rf_train,
+  ntree      = 500,
+  mtry       = 2,
+  importance = TRUE
+)
+
+cat("\nRandom Forest classifier summary:\n")
+print(rf_model)
+
+rf_preds <- predict(rf_model, newdata = rf_test, type = "class")
+
+rf_conf_matrix <- table(
+  Actual    = rf_test$PRIMINSR,
+  Predicted = rf_preds
+)
+
+rf_accuracy <- mean(rf_preds == rf_test$PRIMINSR)
+
+cat("\n--- RANDOM FOREST PERFORMANCE (TEST SET) ---\n")
+cat("Accuracy:", round(rf_accuracy * 100, 1), "%\n")
+cat("Confusion matrix:\n")
+print(rf_conf_matrix)
+
+# Save RF confusion matrix + accuracy (outputs)
+readr::write_csv(
+  as.data.frame(rf_conf_matrix),
+  file.path(outputs_dir, "rf_confusion_matrix_primary_insurance.csv")
+)
+
+readr::write_csv(
+  tibble(test_accuracy = round(rf_accuracy, 3)),
+  file.path(outputs_dir, "rf_model_performance_primary_insurance.csv")
+)
+
+rf_varimp <- importance(rf_model)
+cat("\nRandom Forest variable importance:\n")
+print(rf_varimp)
+
+rf_varimp_df <- as.data.frame(rf_varimp) |>
+  tibble::rownames_to_column("predictor")
+
+p_rf_varimp <- ggplot(
+  rf_varimp_df,
+  aes(x = reorder(predictor, MeanDecreaseGini), y = MeanDecreaseGini)
+) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Random Forest Variable Importance – Primary Insurance Type",
+    x     = "Predictor",
+    y     = "Mean Decrease Gini"
+  ) +
+  theme_minimal()
+
+p_rf_varimp
+save_plot("rf_variable_importance_primary_insurance.png")
+
+# Save RF variable importance (outputs)
+readr::write_csv(
+  rf_varimp_df,
+  file.path(outputs_dir, "rf_variable_importance_primary_insurance.csv")
+)
+
+# Save RF model
+rf_model_path <- file.path(models_dir, "socioeconomic_insurance_rf.rds")
+saveRDS(rf_model, rf_model_path)
+cat("\nSaved Random Forest model to:", rf_model_path, "\n")
+
+# ----------------------------------------------------
+# PIPELINE COMPLETE
+# ----------------------------------------------------
+
+cat("\n--------------------------------------------------\n")
+cat("Pipeline complete:\n")
+cat("- Data cleaning & variable recoding (BRFSS)\n")
+cat("- Descriptive analysis of insurance and socioeconomic factors\n")
+cat("- Chi-square association testing\n")
+cat("- Multinomial logistic regression (primary insurance type)\n")
+cat("- Random Forest classification benchmark\n")
+cat("--------------------------------------------------\n")
