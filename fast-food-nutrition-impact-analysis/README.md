@@ -1,4 +1,4 @@
-# Nutritional Risk Assessment in the Fast-Food Industry
+# Fast Food Nutrition Impact Analysis
 
 ## Overview
 End-to-end analysis of a fast-food nutrition dataset (515 menu items across 8 chains) to compare nutrient profiles, identify high-risk items, and build interpretable models explaining calories and total fat. Includes an interpretable classification exercise (McDonald’s vs. Subway) and a Random Forest benchmark.
@@ -10,7 +10,7 @@ End-to-end analysis of a fast-food nutrition dataset (515 menu items across 8 ch
 - Can McDonald’s vs. Subway items be classified using nutrients alone?
 
 ## Data
-- **Source:** Kaggle fast food nutrition dataset (`fast_food_data.csv`)
+- **Source:** Kaggle (Fast Food Nutrition dataset): fast_food_data.csv
 - **Rows:** 515 menu items across 8 chains
 - **Key fields:** calories, total_fat, sat_fat, sugar, sodium, protein, cholesterol, total_carb, calcium
 - **Missingness:**  
@@ -39,4 +39,3 @@ End-to-end analysis of a fast-food nutrition dataset (515 menu items across 8 ch
 
 ## Tech Stack
 R · tidyverse · ggplot2 · broom · lm.beta · ggcorrplot · randomForest
-
