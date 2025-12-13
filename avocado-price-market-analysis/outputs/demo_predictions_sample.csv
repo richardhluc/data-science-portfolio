@@ -1,0 +1,6 @@
+region,season,type_bin,actual_plu4225,predicted_plu4225,abs_error,pct_error
+SouthCentral,Winter,1,3730.28,16318.6,12588.32,337.5
+GreatLakes,Fall,0,506492.7,994550.55,488057.85000000003,96.4
+SouthCentral,Fall,1,2648.96,-75313.86,-77962.82,2943.1
+Southeast,Spring,0,251312.52,706843.91,455531.39,181.3
+SouthCentral,Spring,0,1465437.6,1012753.28,-452684.32000000007,30.9
