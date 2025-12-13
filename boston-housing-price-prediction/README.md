@@ -1,4 +1,4 @@
-# Boston Housing Price Insights
+# Boston Housing Price Prediction
 
 ## Overview
 End-to-end analysis of Boston neighborhood housing data to support property valuation, lending risk assessment, and urban planning. The project combines exploratory analysis, regularized regression, and nonlinear modeling to explain and predict median home prices.
@@ -9,7 +9,7 @@ End-to-end analysis of Boston neighborhood housing data to support property valu
 - Do nonlinear relationships improve prediction accuracy?
 
 ## Data
-- **Source:** Kaggle Boston Housing dataset
+- **Source:** Kaggle (Boston Housing dataset)
 - **Rows:** 506 neighborhoods
 - **Key fields:** RM, LSTAT, NOX, TAX, INDUS, DIS, PTRATIO, CHAS, MEDV
 - **Missingness:** None (all fields complete)
