@@ -1,0 +1,612 @@
+# ------------------------------------------------------
+# FAST FOOD NUTRITION IMPACT ANALYSIS
+# ------------------------------------------------------
+# Goal: Explore nutritional content across major fast-food chains and build
+# interpretable models that explain calories and total fat using key nutrients.
+#
+# Business questions:
+# - How do nutritional profiles differ across major fast-food chains?
+# - Which restaurants and items pose the highest "nutritional risk" (fat, sugar, calories)?
+# - Which nutrients most strongly drive calories and total fat?
+# - Can we classify McDonald's vs Subway items based on nutrients alone?
+#
+# Key Tasks:
+#   1. Clean and summarize the fastfood dataset.
+#   2. Compare nutritional profiles across restaurants.
+#   3. Explore correlations among calories, fat, sugar, calcium, etc.
+#   4. Build:
+#        - Logistic regression to classify McDonald's vs Subway.
+#        - Linear regression to predict calories.
+#        - Linear regression to predict total fat.
+#   5. Visualize correlations and model "feature importance" for stakeholders.
+#   6. Benchmark with a random forest model and variable importance.
+#
+# Tools: R, tidyverse, ggplot2, lm.beta, broom, ggcorrplot, randomForest
+# Dataset: Kaggle (Fast Food Nutrition dataset)
+
+# ---------- LOAD LIBRARIES ----------
+
+library(tidyverse)
+library(lm.beta)
+library(broom)
+library(ggcorrplot)
+library(randomForest)
+
+# Reproducibility
+set.seed(42)
+
+# ---------- PROJECT SETUP ----------
+
+# Project root
+project_dir <- getwd()
+
+fig_dir     <- file.path(project_dir, "figures")
+models_dir  <- file.path(project_dir, "models")
+outputs_dir <- file.path(project_dir, "outputs")
+
+if (!dir.exists(fig_dir))     dir.create(fig_dir, recursive = TRUE)
+if (!dir.exists(models_dir))  dir.create(models_dir, recursive = TRUE)
+if (!dir.exists(outputs_dir)) dir.create(outputs_dir, recursive = TRUE)
+
+save_plot <- function(filename, width = 8, height = 5, dpi = 300) {
+  ggsave(
+    filename = file.path(fig_dir, filename),
+    width    = width,
+    height   = height,
+    dpi      = dpi
+  )
+}
+
+# ---------- LOAD DATA ----------
+
+# Load fast-food nutritional dataset
+data_path <- file.path(project_dir, "fast_food_data.csv")
+fastfood  <- readr::read_csv(data_path)
+head(fastfood)
+
+# ---------- DATA CLEANING & DESCRIPTIVE STATISTICS ----------
+
+# Here we:
+# - Inspect missingness across variables
+# - Summarize restaurants
+# - Identify some high-risk items and basic chain-level stats
+
+# Overall missingness
+na_summary <- colSums(is.na(fastfood))
+na_percent <- round(na_summary / nrow(fastfood) * 100, 2)
+
+na_summary
+na_percent
+
+missingness_tbl <- tibble(
+  variable        = names(na_percent),
+  percent_missing = na_percent
+)
+
+readr::write_csv(
+  missingness_tbl,
+  file.path(outputs_dir, "missingness_summary_fastfood.csv")
+)
+
+# NA in specific nutrients
+calcium_na <- sum(is.na(fastfood$calcium))
+calcium_na
+
+bk_fiber_na <- fastfood |>
+  filter(restaurant == "Burger King") |>
+  filter(is.na(fiber)) |>
+  nrow()
+bk_fiber_na
+
+# Unique restaurants (alphabetical)
+restaurants <- fastfood |>
+  distinct(restaurant) |>
+  arrange(restaurant)
+restaurants
+readr::write_csv(restaurants, file.path(outputs_dir, "unique_restaurants.csv"))
+
+# ---------- EXPLORATORY DATA ANALYSIS (EDA) ----------
+
+# Goal: highlight specific high-risk items and simple restaurant comparisons.
+
+# McDonald's: highest total fat items
+# Business use: identify top "high-fat risk" menu items for McDonald's.
+mcd_total_fat <- fastfood |>
+  filter(restaurant == "Mcdonalds") |>
+  arrange(desc(total_fat)) |>
+  select(restaurant, item, total_fat)
+
+mcd_total_fat
+readr::write_csv(
+  mcd_total_fat,
+  file.path(outputs_dir, "mcdonalds_highest_total_fat_items.csv")
+)
+
+# Highest-calorie item between Burger King and Chick-Fil-A
+# Business use: quick comparison of "heaviest" menu items between two chains.
+high_cal_item <- fastfood |>
+  filter(restaurant %in% c("Burger King", "Chick-Fil-A")) |>
+  slice_max(calories, n = 1, with_ties = FALSE) |>
+  select(restaurant, item, calories)
+high_cal_item
+
+# Average sugar for Subway (g)
+avg_sugar_subway <- fastfood |>
+  filter(restaurant == "Subway") |>
+  summarise(average_sugar_g = round(mean(sugar, na.rm = TRUE), 2))
+avg_sugar_subway
+
+# Average calories for Taco Bell (kcal)
+avg_cal_taco <- fastfood |>
+  filter(restaurant == "Taco Bell") |>
+  summarise(average_calories_kcal = round(mean(calories, na.rm = TRUE), 2))
+avg_cal_taco
+
+summary_chain_stats <- bind_rows(
+  avg_sugar_subway |> mutate(restaurant = "Subway"),
+  avg_cal_taco     |> mutate(restaurant = "Taco Bell")
+)
+readr::write_csv(
+  summary_chain_stats,
+  file.path(outputs_dir, "summary_chain_stats_subway_tacobell.csv")
+)
+
+# ---------- TOP RISK ITEMS: FAT × SUGAR ----------
+
+# Business use: identify especially "dense" items that are high in both fat and sugar.
+
+top_fat_sugar <- fastfood |>
+  mutate(fatXsugar = total_fat * sugar) |>
+  arrange(desc(fatXsugar)) |>
+  slice_head(n = 3) |>
+  select(restaurant, item, total_fat, sugar, fatXsugar)
+
+top_fat_sugar
+readr::write_csv(
+  top_fat_sugar,
+  file.path(outputs_dir, "top3_items_fat_times_sugar.csv")
+)
+
+p_top_fat_sugar <- ggplot(
+  top_fat_sugar,
+  aes(
+    x = reorder(item, fatXsugar),
+    y = fatXsugar,
+    fill = restaurant
+  )
+) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  labs(
+    title = "Top 3 Menu Items by Combined Fat × Sugar",
+    x = "Menu Item",
+    y = "Fat × Sugar (g²)"
+  ) +
+  theme_minimal()
+
+p_top_fat_sugar
+save_plot("top3_items_fat_times_sugar.png")
+
+# ---------- RESTAURANT-LEVEL RISK: SATURATED FAT ----------
+
+# Business use: Which restaurants have the highest average saturated fat?
+high_sat_fat_restaurants <- fastfood |>
+  group_by(restaurant) |>
+  summarise(average_saturated_fat_g = mean(sat_fat, na.rm = TRUE)) |>
+  filter(average_saturated_fat_g > 10)
+
+high_sat_fat_restaurants
+readr::write_csv(
+  high_sat_fat_restaurants,
+  file.path(outputs_dir, "restaurants_high_saturated_fat.csv")
+)
+
+# Boxplot of saturated fat distribution by restaurant
+p_satfat_box <- ggplot(
+  fastfood,
+  aes(x = reorder(restaurant, sat_fat, FUN = median), y = sat_fat)
+) +
+  geom_boxplot(fill = "lightblue") +
+  coord_flip() +
+  labs(
+    title = "Saturated Fat Distribution by Restaurant",
+    x = "Restaurant",
+    y = "Saturated Fat (g)"
+  ) +
+  theme_minimal()
+
+p_satfat_box
+save_plot("sat_fat_distribution_by_restaurant.png")
+
+# ---------- CORRELATION ANALYSIS ----------
+
+# Goal: explore how calories, fat, sugar, and calcium move together across chains.
+cor_data <- fastfood |>
+  filter(restaurant %in% c("Sonic", "Subway", "Taco Bell")) |>
+  select(calories, total_fat, sugar, calcium) |>
+  drop_na()
+
+cor_matrix <- round(cor(cor_data), 2)
+cor_matrix
+
+p_corr <- ggcorrplot(
+  cor_matrix,
+  lab         = TRUE,
+  lab_size    = 3,
+  type        = "lower",
+  outline.col = "white",
+  title       = "Nutrient Correlation: Sonic, Subway, Taco Bell"
+)
+
+p_corr
+save_plot("corr_heatmap_sonic_subway_tacobell.png")
+
+# ---------- STATISTICAL ANALYSIS & MODELING ----------
+
+# Three main modeling components:
+# 1) Logistic regression: classify McDonald's vs Subway using nutrients.
+# 2) Linear regression: calories predicted by saturated fat, fiber, and sugar.
+# 3) Linear regression: total fat predicted by cholesterol, carbs, and restaurant.
+
+# ---------- LOGISTIC REGRESSION: MCDONALD'S (1) VS SUBWAY (0) ----------
+
+# Logistic model: nutrients -> probability an item belongs to McDonald's.
+logreg_data <- fastfood |>
+  filter(restaurant %in% c("Mcdonalds", "Subway")) |>
+  mutate(
+    mcd_bin = ifelse(restaurant == "Mcdonalds", 1, 0)
+  ) |>
+  select(mcd_bin, calories, sodium, protein) |>
+  drop_na()
+
+mod_logreg <- glm(
+  mcd_bin ~ calories + sodium + protein,
+  data   = logreg_data,
+  family = binomial()
+)
+
+logreg_summary <- summary(mod_logreg)
+logreg_summary
+
+# Tidy coefficients + odds ratios
+logreg_tidy <- tidy(mod_logreg) |>
+  mutate(
+    odds_ratio = exp(estimate)
+  )
+
+logreg_tidy
+readr::write_csv(
+  logreg_tidy,
+  file.path(outputs_dir, "logistic_mcd_vs_subway_tidy.csv")
+)
+
+# Compare AIC with and without sodium (model selection)
+mod_logreg_no_sodium <- glm(
+  mcd_bin ~ calories + protein,
+  data   = logreg_data,
+  family = binomial()
+)
+
+aic_original  <- AIC(mod_logreg)
+aic_no_sodium <- AIC(mod_logreg_no_sodium)
+
+aic_original
+aic_no_sodium
+
+# Performance check (accuracy + confusion matrix)
+logreg_data <- logreg_data |>
+  mutate(
+    prob_mcd = predict(mod_logreg, type = "response"),
+    pred_mcd = ifelse(prob_mcd >= 0.5, 1, 0)
+  )
+
+conf_matrix <- table(
+  Actual    = logreg_data$mcd_bin,
+  Predicted = logreg_data$pred_mcd
+)
+conf_matrix
+
+logreg_accuracy <- mean(logreg_data$pred_mcd == logreg_data$mcd_bin)
+logreg_accuracy
+
+# Probability distribution by restaurant
+p_prob_density <- ggplot(
+  logreg_data,
+  aes(
+    x    = prob_mcd,
+    fill = factor(mcd_bin, labels = c("Subway", "McDonald's"))
+  )
+) +
+  geom_density(alpha = 0.4) +
+  labs(
+    title = "Predicted Probability of McDonald's by Chain",
+    x     = "Predicted Probability of McDonald's",
+    fill  = "Actual Restaurant"
+  ) +
+  theme_minimal()
+
+p_prob_density
+save_plot("logreg_probability_density_mcd_vs_subway.png")
+
+# ---------- LINEAR REGRESSION: CALORIES MODEL ----------
+
+# Goal: explain calories using saturated fat, fiber, and sugar.
+mod_calories <- lm(calories ~ sat_fat + fiber + sugar, data = fastfood)
+calories_summary <- summary(mod_calories)
+calories_summary
+
+# Standardized coefficients (feature importance)
+mod_calories_std <- lm.beta(mod_calories)$standardized.coefficients
+
+std_df_cal <- tibble(
+  term     = names(mod_calories_std),
+  std_coef = as.numeric(mod_calories_std)
+) |>
+  filter(term != "(Intercept)") |>
+  arrange(desc(abs(std_coef)))
+
+std_df_cal
+readr::write_csv(
+  std_df_cal,
+  file.path(outputs_dir, "calories_model_standardized_coefficients.csv")
+)
+
+# Standardized coefficient importance
+p_cal_importance <- ggplot(
+  std_df_cal,
+  aes(x = reorder(term, std_coef), y = std_coef)
+) +
+  geom_col(fill = "steelblue") +
+  coord_flip() +
+  labs(
+    title = "Standardized Coefficients – Calories Model",
+    x     = "Predictor",
+    y     = "Standardized Coefficient"
+  ) +
+  theme_minimal()
+
+p_cal_importance
+save_plot("calories_model_standardized_coefficients.png")
+
+# Calories vs saturated fat
+p_cal_vs_satfat <- ggplot(
+  fastfood,
+  aes(x = sat_fat, y = calories)
+) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", color = "red") +
+  labs(
+    title = "Calories vs Saturated Fat",
+    x     = "Saturated Fat (g)",
+    y     = "Calories (kcal)"
+  ) +
+  theme_minimal()
+
+p_cal_vs_satfat
+save_plot("calories_vs_saturated_fat.png")
+
+# ---------- LINEAR REGRESSION: TOTAL FAT MODEL ----------
+
+# Goal: explain total fat levels, focusing on chains with ~50–60 items (balanced sample).
+subset_restaurants <- fastfood |>
+  group_by(restaurant) |>
+  filter(dplyr::n() >= 50 & dplyr::n() <= 60) |>
+  ungroup()
+
+mod_fat <- lm(
+  total_fat ~ cholesterol + total_carb + restaurant,
+  data = subset_restaurants
+)
+
+fat_summary <- summary(mod_fat)
+fat_summary
+
+# Standardized coefficients (total fat model)
+mod_fat_std <- lm.beta(mod_fat)$standardized.coefficients
+mod_fat_std
+readr::write_csv(
+  tibble(
+    term     = names(mod_fat_std),
+    std_coef = as.numeric(mod_fat_std)
+  ),
+  file.path(outputs_dir, "total_fat_model_standardized_coefficients.csv")
+)
+
+# Total fat distribution by restaurant
+p_fat_box <- ggplot(
+  subset_restaurants,
+  aes(x = restaurant, y = total_fat)
+) +
+  geom_boxplot(fill = "lightgreen") +
+  labs(
+    title = "Total Fat Distribution by Restaurant (50–60 Items)",
+    x     = "Restaurant",
+    y     = "Total Fat (g)"
+  ) +
+  theme_minimal()
+
+p_fat_box
+save_plot("total_fat_distribution_50_60_items.png")
+
+# ---------- MODEL DIAGNOSTIC PLOT: CALORIES MODEL ----------
+
+# Residual plot to check for non-linearity, heteroscedasticity, and outliers.
+residual_df <- fastfood |>
+  select(calories, sat_fat, fiber, sugar) |>
+  drop_na() |>
+  mutate(
+    pred_calories = predict(mod_calories, newdata = fastfood |>
+                              select(calories, sat_fat, fiber, sugar) |>
+                              drop_na()),
+    residuals     = calories - pred_calories
+  )
+
+p_resid <- ggplot(
+  residual_df,
+  aes(x = pred_calories, y = residuals)
+) +
+  geom_point(alpha = 0.5) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(
+    title = "Residuals vs Fitted – Calories Model",
+    x     = "Predicted Calories (kcal)",
+    y     = "Residuals (kcal)"
+  ) +
+  theme_minimal()
+
+p_resid
+save_plot("calories_residuals_vs_fitted.png")
+
+# ---------- SAVE MODEL & DEMO PREDICTIONS (CALORIES MODEL) ----------
+
+# Calories model as the primary regression model
+best_model <- mod_calories
+
+model_path <- file.path(models_dir, "fastfood_calories_best_lm.rds")
+saveRDS(best_model, file = model_path)
+
+cat("\nSaved best calories model to:", model_path, "\n")
+
+# Demo predictions on a small sample (with error metrics)
+calories_data_complete <- fastfood |>
+  select(calories, sat_fat, fiber, sugar) |>
+  drop_na()
+
+demo_sample <- calories_data_complete |>
+  slice_sample(n = 5)
+
+demo_preds <- predict(best_model, newdata = demo_sample)
+
+demo_results <- demo_sample |>
+  mutate(
+    actual_calories    = calories,
+    predicted_calories = round(demo_preds, 1),
+    abs_error          = predicted_calories - actual_calories,
+    pct_error          = round(abs(abs_error) / actual_calories * 100, 1)
+  ) |>
+  select(
+    sat_fat,
+    fiber,
+    sugar,
+    actual_calories,
+    predicted_calories,
+    abs_error,
+    pct_error
+  )
+
+cat("\nDemo predictions (sample rows with error):\n")
+print(demo_results)
+
+readr::write_csv(
+  demo_results,
+  file.path(outputs_dir, "demo_predictions_calories_model.csv")
+)
+
+# ---------- OVERALL ERROR SUMMARY FOR CALORIES MODEL ----------
+
+# Compute global performance metrics for the calories model.
+# MAE  = average absolute error in calories.
+# RMSE = penalizes larger errors more strongly.
+# MAPE = average percentage error.
+
+error_df <- calories_data_complete |>
+  mutate(
+    pred_calories = predict(best_model, newdata = calories_data_complete),
+    abs_error     = pred_calories - calories,
+    pct_error     = abs(abs_error) / calories * 100
+  )
+
+error_summary <- error_df |>
+  summarise(
+    MAE  = round(mean(abs(abs_error), na.rm = TRUE), 2),
+    RMSE = round(sqrt(mean(abs_error^2, na.rm = TRUE)), 2),
+    MAPE = round(mean(pct_error[pct_error < 500], na.rm = TRUE), 2)
+  )
+
+cat("\n--------------- OVERALL CALORIES MODEL PERFORMANCE ---------------\n")
+print(error_summary)
+cat("\n(Note: MAPE excludes cases above 500% due to very small calorie values.)\n")
+
+readr::write_csv(
+  error_summary,
+  file.path(outputs_dir, "calories_model_overall_performance.csv")
+)
+
+# -------------------------------------------------------------------
+# RANDOM FOREST CLASSIFIER (McDonald's (1) vs Subway (0))
+# -------------------------------------------------------------------
+
+# Goal: Benchmark a non-linear classifier using the same predictors
+# as the logistic regression (calories, sodium, protein).
+rf_data <- logreg_data |>
+  mutate(
+    mcd_bin = factor(mcd_bin)
+  )
+
+set.seed(42)
+
+rf_model <- randomForest(
+  mcd_bin ~ calories + sodium + protein,
+  data       = rf_data,
+  ntree      = 500,
+  mtry       = 2,
+  importance = TRUE
+)
+
+cat("\nRandom Forest classifier summary:\n")
+print(rf_model)
+
+# Save RF model
+rf_model_path <- file.path(models_dir, "fastfood_mcd_vs_subway_rf.rds")
+saveRDS(rf_model, rf_model_path)
+cat("\nSaved RF model to:", rf_model_path, "\n")
+
+# Predictions and accuracy
+rf_preds <- predict(rf_model, newdata = rf_data, type = "class")
+
+rf_accuracy <- mean(rf_preds == rf_data$mcd_bin)
+cat("\nRandom Forest accuracy (McDonald's vs Subway):", round(rf_accuracy * 100, 1), "%\n")
+
+# Confusion matrix
+rf_conf_matrix <- table(
+  Actual    = rf_data$mcd_bin,
+  Predicted = rf_preds
+)
+rf_conf_matrix
+
+# Variable importance
+rf_varimp <- importance(rf_model)
+cat("\nRandom Forest variable importance:\n")
+print(rf_varimp)
+
+rf_varimp_df <- as.data.frame(rf_varimp) |>
+  tibble::rownames_to_column("predictor")
+
+p_rf_varimp <- ggplot(
+  rf_varimp_df,
+  aes(x = reorder(predictor, MeanDecreaseGini), y = MeanDecreaseGini)
+) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Random Forest Variable Importance – McDonald's vs Subway",
+    x     = "Predictor",
+    y     = "Mean Decrease Gini"
+  ) +
+  theme_minimal()
+
+p_rf_varimp
+save_plot("rf_variable_importance_mcd_vs_subway.png")
+
+# ----------------------------------------------------
+# PIPELINE COMPLETE
+# ----------------------------------------------------
+
+cat("\n--------------------------------------------------\n")
+cat("Pipeline complete:\n")
+cat("- Data cleaning & descriptive analysis\n")
+cat("- Nutritional risk exploration across chains\n")
+cat("- Logistic regression (McDonald's vs Subway)\n")
+cat("- Linear regression (calories & total fat)\n")
+cat("- Random Forest benchmark model\n")
+cat("--------------------------------------------------\n")
