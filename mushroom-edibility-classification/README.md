@@ -22,5 +22,14 @@ End-to-end classification of mushroom edibility using categorical physical attri
 - **Evaluation:** Confusion matrix, Precision, Recall, F1, ROC–AUC, PR curves
 
 ## Key Results
-- **Perfect classification:** Accu
+- **Perfect classification:** Accuracy, Precision, Recall, F1, and ROC–AUC = 1.00 on the test set
+- **Dimensionality reduction:** PCA reduces features by ~65% (116 → 40) with no loss in performance
+- **Deployment preference:** PCA-based model favored for efficiency and generalization
 
+## Artifacts
+- **Figures:** `/figures/`
+- **Tables:** `/outputs/metrics_summary_mushroom_nn.csv`
+- **Models:** `/models/mushroom_pca_model.h5`
+
+## Tech Stack
+Python · pandas · NumPy · scikit-learn · TensorFlow / Keras · matplotlib · seaborn · PCA
