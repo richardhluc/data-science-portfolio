@@ -9,7 +9,7 @@ End-to-end customer segmentation using demographics, purchase behavior, and camp
 - How can clusters guide campaign and channel strategy?
 
 ## Data
-- **Source:** Customer Personality / Marketing Campaign dataset
+- **Source:** Kaggle (Consumer Behavior dataset)
 - **Rows:** 2,240 customers (2,213 after processing)
 - **Key fields:** Income, Education, Marital_Status, Recency, product spend, purchase channels
 - **Missingness:** None after validation
@@ -33,4 +33,3 @@ End-to-end customer segmentation using demographics, purchase behavior, and camp
 
 ## Tech Stack
 Python · pandas · NumPy · scikit-learn · matplotlib · PCA · K-Means · joblib
-
