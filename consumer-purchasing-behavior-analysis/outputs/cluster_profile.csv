@@ -1,0 +1,5 @@
+cluster,Age,Income,Children,Customer_Tenure,Recency,Total_Spent,NumDealsPurchases,NumWebPurchases,NumCatalogPurchases,NumStorePurchases,NumWebVisitsMonth,Complain,Total_Accepted_Campaigns,MntWines,MntFruits,MntMeatProducts,MntFishProducts,MntSweetProducts,MntGoldProds,Total_Spent
+0,57.97,74872.5,0.32,352.58,49.39,1258.38,1.54,5.28,5.77,8.49,3.22,0.01,0.66,629.67,41.21,405.44,75.78,41.64,64.63,1258.38
+1,53.76,35646.17,1.2,310.68,48.78,101.4,1.85,2.1,0.56,3.33,6.27,0.01,0.08,46.92,4.96,23.03,7.23,5.02,14.24,101.4
+2,59.55,54357.71,1.31,429.75,49.1,650.95,4.4,6.26,2.73,7.08,6.41,0.01,0.3,431.39,15.0,111.2,19.1,14.5,59.76,650.95
+3,55.59,74242.5,0.36,381.22,49.1,1375.99,1.66,5.75,5.48,8.49,3.21,0.01,0.53,526.48,102.41,422.4,123.15,108.13,93.42,1375.99
