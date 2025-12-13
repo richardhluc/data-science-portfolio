@@ -10,7 +10,7 @@ Due to file size and licensing considerations, the raw dataset is **not included
 1. Visit the official CDC BRFSS website:
    https://www.cdc.gov/brfss/annual_data/annual_2021.html
 
-2. Download the **BRFSS 2021** data file (XPT or CSV format).
+2. Download the **BRFSS 2021** data file (CSV format).
 
 3. Place the downloaded file in this directory and rename it as: health_data.csv
 
