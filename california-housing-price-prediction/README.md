@@ -10,7 +10,7 @@ End-to-end analysis of California census housing data to support property valuat
 - Can a machine-learning model accurately predict median house values?
 
 ## Data
-- **Source:** Kaggle California Housing dataset
+- **Source:** Kaggle (California Housing dataset)
 - **Rows:** ~20,600 census tracts
 - **Key fields:** latitude, longitude, median_income, housing_median_age, total_rooms, households, ocean_proximity
 - **Missingness:** Minor missingness in `total_bedrooms` handled via imputation
