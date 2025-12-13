@@ -1,4 +1,4 @@
-# Grocery Sales Intelligence (SQL)
+# Grocery Sales Performance Analysis
 
 ## Overview
 End-to-end SQL analytics project analyzing grocery sales transactions to support revenue growth, product strategy, and sales performance optimization. The project transforms raw sales data into a normalized relational model, performs data quality validation, and delivers business-ready analytics consumed in Tableau dashboards to inform pricing, merchandising, and salesforce decisions.
@@ -11,7 +11,8 @@ End-to-end SQL analytics project analyzing grocery sales transactions to support
 - How does product mix vary by salesperson, and where do cross-sell opportunities exist?
 
 ## Data
-- **Source:** Kaggle — Grocery Sales dataset
+- **Source:** Kaggle (Grocery Sales dataset): categories.csv, cities.csv, countries.csv, customers.csv, employees.csv, products.csv,
+-   sales.csv
 - **Core entities:** sales transactions, products, categories, customers, employees, cities, countries
 - **Schema design:**
   - Normalized star-like schema
