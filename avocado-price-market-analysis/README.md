@@ -1,4 +1,4 @@
-# Avocado Supply-Chain Insights (PLU 4225)
+# Avocado Price Market Analysis
 
 ## Overview
 End-to-end analysis of U.S. retail avocado data (2015–2023) to support pricing, demand planning, and supply-chain optimization. The project combines exploratory analysis, interpretable regression, and a machine-learning benchmark to understand large avocado (PLU 4225) demand.
@@ -10,7 +10,7 @@ End-to-end analysis of U.S. retail avocado data (2015–2023) to support pricing
 - Can season, region, and type predict large-fruit demand?
 
 ## Data
-- **Source:** Kaggle avocado dataset
+- **Source:** Kaggle (Avocado dataset)
 - **Rows:** ~53k observations (Date × region × type)
 - **Key fields:** AveragePrice, TotalVolume, plu4225, region, type, Date
 - **Missingness:** Core price and volume fields complete; bag-size fields (~23%) excluded
@@ -42,4 +42,3 @@ End-to-end analysis of U.S. retail avocado data (2015–2023) to support pricing
 
 ## Tech Stack
 R · tidyverse · ggplot2 · broom · lm.beta · ggcorrplot · randomForest
-
