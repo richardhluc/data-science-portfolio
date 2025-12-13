@@ -9,7 +9,7 @@ End-to-end demand forecasting pipeline using historical restaurant visits, store
 - Which model performs best under time-based validation?
 
 ## Data
-- **Sources:** Kaggle (Restaurant Visitor dataset): `air_visit_data`, `air_store_info`, `date_info`
+- **Sources:** Kaggle (Restaurant Visitor dataset): air_visit_data.csv, air_store_info.csv, date_info.csv
 - **Merged dataset:** 252,108 rows
 - **Target:** `visitors`
 - **Cleaning:** encoding fixes
