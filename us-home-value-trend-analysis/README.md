@@ -1,4 +1,4 @@
-# U.S. Home Value Intelligence (SQL)
+# U.S. Home Value Trend Analysis
 
 ## Overview
 End-to-end SQL analytics project analyzing U.S. home value trends using Zillow鈥檚 Home Value Index (ZHVI). The project transforms raw housing data into a structured time-series model, performs data quality validation, and produces business-ready analytics consumed in Tableau dashboards to support market analysis, valuation, and investment decision-making.
@@ -11,7 +11,7 @@ End-to-end SQL analytics project analyzing U.S. home value trends using Zillow鈥
 - What regions show sustained momentum through positive growth streaks?
 
 ## Data
-- **Source:** Zillow Home Value Index (ZHVI)
+- **Source:** Zillow (Home Value Index (ZHVI) dataset)
 - **Core entities:**
   - Regions (state-level aggregation)
   - Monthly time-series home values (ZHVI)
@@ -57,5 +57,5 @@ End-to-end SQL analytics project analyzing U.S. home value trends using Zillow鈥
   - Post-Crisis Recovery Analysis
 
 ## Tech Stack
-SQL (PostgreSQL-style) 路 Time-Series Analysis 路 Analytical SQL 路 Window Functions 路 Tableau 路 Python (pandas for preprocessing)
+SQL (PostgreSQL) 路 Time-Series Analysis 路 Analytical SQL 路 Window Functions 路 Tableau 路 Python (pandas for preprocessing)
 
