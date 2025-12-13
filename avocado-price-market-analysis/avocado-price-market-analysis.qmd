@@ -1,0 +1,666 @@
+# ----------------------------------------------------
+# AVOCADO PRICE MARKET ANALYSIS
+# ----------------------------------------------------
+# Goal: Analyze U.S. avocado prices, sales volumes, and market behavior across
+# regions and model large avocado (PLU 4225) sales using season, region, and 
+# type.
+#
+# Business questions:
+# - How do prices and sales volumes vary by region, type, and time?
+# - How large is the price premium for organic vs conventional avocados?
+# - Which seasons and regions drive large avocado (PLU 4225) sales?
+# - Can we build a model to predict large avocado sales to inform planning?
+#
+# Key Tasks:
+#   1. Clean and tidy the raw avocado dataset.
+#   2. Explore price and volume patterns by region, type, and time.
+#   3. Quantify organic vs conventional price differences.
+#   4. Model large avocado sales using regression and interpret drivers.
+#   5. Produce publication-ready plots saved to /figures.
+#   6. Benchmark with a random forest model and variable importance.
+#
+# Tools: R, tidyverse, lm.beta, broom, ggcorrplot, ggplot2, randomForest
+# Data Source: Kaggle (Avocado dataset)
+
+# ---------- LOAD LIBRARIES ----------
+
+library(tidyverse)
+library(lm.beta)
+library(broom)
+library(ggcorrplot)
+library(randomForest) 
+
+# Reproducibility
+set.seed(42)
+
+# ---------- PROJECT SETUP ----------
+
+# Project root
+project_dir <- getwd()
+
+fig_dir    <- file.path(project_dir, "figures")
+models_dir <- file.path(project_dir, "models")
+outputs_dir <- file.path(project_dir, "outputs")
+
+if (!dir.exists(fig_dir))     dir.create(fig_dir, recursive = TRUE)
+if (!dir.exists(models_dir))  dir.create(models_dir, recursive = TRUE)
+if (!dir.exists(outputs_dir)) dir.create(outputs_dir, recursive = TRUE)
+
+save_plot <- function(filename, width = 8, height = 5, dpi = 300) {
+  ggsave(
+    filename = file.path(fig_dir, filename),
+    width    = width,
+    height   = height,
+    dpi      = dpi
+  )
+}
+
+# ---------- LOAD DATA ----------
+
+# Load avocados market data
+data_path <- file.path(project_dir, "avocados_market_data.csv")
+avocados  <- readr::read_csv(data_path)
+head(avocados)
+
+# ---------- DATA TIDYING & CLEANING ----------
+
+# Here we:
+# - Inspect missingness
+# - Parse Date into Year / Month / Day
+# - Build a tidy dataset with organic + conventional side by side
+
+# Missingness summary
+na_summary  <- colSums(is.na(avocados))
+na_percent  <- colSums(is.na(avocados)) / nrow(avocados) * 100
+na_summary
+na_percent
+
+# Robust date split
+avocados <- avocados |>
+  tidyr::separate_wider_delim(
+    cols       = Date,
+    delim      = "-",
+    names      = c("Year_chr", "Month_chr", "Day_chr"),
+    cols_remove = FALSE
+  ) |>
+  mutate(
+    Year  = as.numeric(Year_chr),
+    Month = as.numeric(Month_chr),
+    Day   = as.numeric(Day_chr)
+  ) |>
+  select(-Year_chr, -Month_chr, -Day_chr)
+
+# Descriptive subset used for EDA (region-level prices and volumes)
+avocados_descr <- avocados |>
+  select(Year, Month, Day, Date, region, type, AveragePrice, TotalVolume)
+
+head(avocados_descr, 10)
+
+# Exclude large aggregate regions to focus on meaningful local markets for EDA
+avocados_descr <- avocados_descr |>
+  filter(
+    !region %in% c(
+      "TotalUS", "West", "SouthCentral", "California", "Northeast",
+      "Southeast", "GreatLakes", "Midsouth", "Plains", "NorthernNewEngland"
+    )
+  )
+
+# Split by type (organic vs conventional)
+avocados_organic <- avocados_descr |>
+  filter(type == "organic")
+
+avocados_conv <- avocados_descr |>
+  filter(type == "conventional")
+
+# Tidy “wide by type” dataset with both organic + conventional per date/region
+avocados_join <- inner_join(
+  avocados_organic,
+  avocados_conv,
+  by = c("Year", "Month", "Day", "Date", "region"),
+  suffix = c("Org", "Conv")
+)
+
+tidy_avocados <- avocados_join |>
+  select(
+    Year, Month, Day, Date, region,
+    AveragePriceOrg, TotalVolumeOrg,
+    AveragePriceConv, TotalVolumeConv
+  )
+
+head(tidy_avocados)
+
+# ------- DESCRIPTIVE STATISTICS & EXPLORATORY DATA ANALYSIS (EDA) -------
+
+# Goal: Understand price variability, regional demand, and organic premiums.
+
+# Price stats for conventional avocados (2020–2021)
+# Business use: identify regions with higher price volatility (risk/opportunity).
+price_summary <- tidy_avocados |>
+  filter(Year %in% c(2020, 2021)) |>
+  group_by(region) |>
+  mutate(
+    mean_price     = round(mean(AveragePriceConv, na.rm = TRUE), 2),
+    median_price   = round(median(AveragePriceConv, na.rm = TRUE), 2),
+    third_quartile = round(quantile(AveragePriceConv, 0.75, na.rm = TRUE), 2),
+    stdev_price    = round(sd(AveragePriceConv, na.rm = TRUE), 2),
+    coef_variation = round(stdev_price / mean_price, 2)
+  ) |>
+  select(region, mean_price, median_price, third_quartile, stdev_price, coef_variation) |>
+  distinct() |>
+  arrange(desc(coef_variation)) |>
+  head(10)
+
+price_summary
+
+# Save price summary for reporting
+readr::write_csv(price_summary, file.path(outputs_dir, "price_summary_2020_2021.csv"))
+
+# Regions with max daily conventional price > $1.79 (2018–2023)
+# Business use: spot regions that occasionally see extreme prices.
+regions_max_price <- tidy_avocados |>
+  filter(Year %in% 2018:2023, AveragePriceConv > 1.79) |>
+  group_by(region) |>
+  summarise(max_daily_price = round(max(AveragePriceConv, na.rm = TRUE), 2)) |>
+  arrange(desc(max_daily_price))
+
+regions_max_price
+
+# Total avocado volume (organic + conventional) in millions for 2021
+# Business use: identify top-demand regions (where logistics and promotions matter most).
+# TotalVolume variables are in number of avocados (units).
+total_volume_2021 <- tidy_avocados |>
+  mutate(total_volume_millions = round((TotalVolumeOrg + TotalVolumeConv) / 1e6, 1)) |>
+  filter(Year == 2021) |>
+  group_by(region) |>
+  summarise(total_avocados_2021 = sum(total_volume_millions, na.rm = TRUE)) |>
+  arrange(desc(total_avocados_2021)) |>
+  head(10)
+
+total_volume_2021
+
+readr::write_csv(total_volume_2021, file.path(outputs_dir, "top10_regions_total_volume_2021.csv"))
+
+# Plot: Top 10 regions by total avocado sales (2021)
+p_top10_volume <- ggplot(
+  total_volume_2021,
+  aes(x = reorder(region, total_avocados_2021),
+      y = total_avocados_2021, fill = region)
+) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  labs(
+    title = "Top 10 Regions by Total Avocado Sales (2021)",
+    x = "Region",
+    y = "Total Volume (millions of avocados)"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text  = element_text(size = 12),
+    axis.title = element_text(size = 14, face = "bold"),
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5)
+  )
+
+p_top10_volume
+save_plot("top10_regions_total_volume_2021.png")
+
+# Biggest price differences (Organic - Conventional) in 2021 (top-volume regions)
+# Business use: quantify organic premium for high-demand markets.
+largest_price_diff <- tidy_avocados |>
+  filter(Year == 2021, region %in% total_volume_2021$region) |>
+  mutate(price_difference = round(AveragePriceOrg - AveragePriceConv, 3)) |>
+  select(Date, region, price_difference) |>
+  arrange(desc(price_difference)) |>
+  head(5)
+
+largest_price_diff
+
+readr::write_csv(largest_price_diff, file.path(outputs_dir, "largest_price_diff_2021_top_regions.csv"))
+
+# Average total monthly volume (2020–2021)
+# Business use: seasonality pattern of total avocado demand.
+avg_monthly_volume <- tidy_avocados |>
+  filter(Year %in% c(2020, 2021)) |>
+  mutate(total_volume = TotalVolumeOrg + TotalVolumeConv) |>
+  group_by(Year, Month) |>
+  summarise(avg_monthly_volume = round(mean(total_volume, na.rm = TRUE))) |>
+  ungroup() |>
+  arrange(Year, Month)
+
+avg_monthly_volume
+
+# Plot: Monthly volume trend (2020–2021)
+p_monthly_volume <- ggplot(
+  avg_monthly_volume,
+  aes(x = Month, y = avg_monthly_volume, color = factor(Year), group = Year)
+) +
+  geom_line(size = 1.1) +
+  geom_point(size = 2) +
+  scale_x_continuous(breaks = 1:12) +
+  labs(
+    title = "Average Monthly Avocado Volume (2020–2021)",
+    x = "Month",
+    y = "Avg Total Volume (avocados)",
+    color = "Year"
+  ) +
+  theme_minimal()
+
+p_monthly_volume
+save_plot("avg_monthly_volume_2020_2021.png")
+
+# ---------- STATISTICAL ANALYSIS & MODELING ----------
+
+# Two main modeling components:
+# 1) Logistic regression: probability of an avocado being organic vs conventional.
+# 2) Linear regression: large avocado (PLU 4225) sales modeled using season, region, and type.
+# 3) Random forest benchmark for PLU 4225 sales.
+
+# Focus dataset for modeling:
+# Keep large regional aggregates for modeling, plus type_bin and PLU 4225
+avocados_stats <- avocados |>
+  filter(region %in% c(
+    "GreatLakes", "Midsouth", "Northeast", "NorthernNewEngland",
+    "Plains", "SouthCentral", "Southeast", "West"
+  )) |>
+  mutate(
+    # type_bin: 0 = conventional, 1 = organic
+    type_bin = ifelse(type == "organic", 1, 0)
+  ) |>
+  select(Year, Month, AveragePrice, plu4225, type_bin, region)
+
+head(avocados_stats)
+
+# Remove extreme price outliers (top/bottom 0.15%)
+lower_bound <- quantile(avocados_stats$AveragePrice, 0.0015, na.rm = TRUE)
+upper_bound <- quantile(avocados_stats$AveragePrice, 0.9985, na.rm = TRUE)
+
+avocados_stats <- avocados_stats |>
+  filter(
+    AveragePrice >= lower_bound,
+    AveragePrice <= upper_bound
+  )
+
+# ---------- CORRELATION HEATMAP ----------
+
+# Examine relationships among core numeric predictors and PLU 4225 volume.
+corr_data <- avocados_stats |>
+  select(Year, Month, AveragePrice, plu4225) |>
+  drop_na()
+
+corr_mat <- cor(corr_data)
+corr_mat
+
+p_corr <- ggcorrplot(
+  corr_mat,
+  lab        = TRUE,
+  lab_size   = 3,
+  type       = "lower",
+  outline.col = "white",
+  title      = "Correlation Heatmap: Year, Month, Price (USD), Large Avocado Sales (units)"
+)
+
+p_corr
+save_plot("correlation_heatmap_core_variables.png")
+
+# Correlation matrix for Northeast region (organic mix vs time and price)
+cor_matrix_northeast <- avocados_stats |>
+  filter(region == "Northeast") |>
+  select(Year, Month, AveragePrice, type_bin) |>
+  na.omit() |>
+  cor() |>
+  round(2)
+
+cor_matrix_northeast
+
+# ---------- LOGISTIC REGRESSION: ORGANIC VS CONVENTIONAL ----------
+
+# Logistic model: how does price relate to the odds that an avocado is organic?
+organic_model <- glm(
+  type_bin ~ AveragePrice,
+  data   = avocados_stats,
+  family = binomial()
+)
+
+organic_model_summary <- summary(organic_model)
+organic_model_summary
+
+organic_model_tidy <- tidy(organic_model)
+organic_model_tidy
+
+# Odds ratios: multiplicative change in odds of "organic" per 1-unit price change (USD).
+exp(coef(organic_model))  
+
+# Save logistic regression summary
+readr::write_csv(organic_model_tidy, file.path(outputs_dir, "organic_logistic_model_tidy.csv"))
+
+# ---------- LARGE AVOCADO (PLU 4225) SALES MODELING: LINEAR REGRESSION ----------
+
+# Linear models: PLU 4225 sales as a function of season, region, and type_bin.
+large_avocados <- avocados_stats |>
+  filter(plu4225 > 0) |>
+  mutate(
+    season = factor(
+      ifelse(
+        Month %in% 3:5, "Spring",
+        ifelse(
+          Month %in% 6:8, "Summer",
+          ifelse(Month %in% 9:11, "Fall", "Winter")
+        )
+      ),
+      levels = c("Winter", "Spring", "Summer", "Fall")
+    )
+  )
+
+# Simple correlation checks for PLU 4225 vs Month and type mix
+cor_large_avocados <- large_avocados |>
+  select(plu4225, Month, type_bin) |>
+  na.omit() |>
+  cor() |>
+  round(2)
+
+cor_large_avocados
+
+lg_avo_mod_season            <- lm(plu4225 ~ season, data = large_avocados)
+lg_avo_mod_season_region     <- lm(plu4225 ~ season + region, data = large_avocados)
+lg_avo_mod_season_region_bin <- lm(plu4225 ~ season + region + type_bin, data = large_avocados)
+
+AIC_season            <- AIC(lg_avo_mod_season)
+AIC_season_region     <- AIC(lg_avo_mod_season_region)
+AIC_season_region_bin <- AIC(lg_avo_mod_season_region_bin)
+
+AIC_season
+AIC_season_region
+AIC_season_region_bin
+
+# Use broom to extract coefficients and fit statistics for reporting
+best_model_tidy   <- tidy(lg_avo_mod_season_region_bin)
+best_model_glance <- glance(lg_avo_mod_season_region_bin)
+best_model_tidy
+best_model_glance
+
+readr::write_csv(best_model_tidy,   file.path(outputs_dir, "large_avo_best_model_tidy.csv"))
+readr::write_csv(best_model_glance, file.path(outputs_dir, "large_avo_best_model_glance.csv"))
+
+# Standardized coefficients for effect size comparison
+std_model <- lm.beta(lg_avo_mod_season_region_bin)
+summary(std_model)
+
+large_avocados <- large_avocados |>
+  mutate(pred_sales = predict(lg_avo_mod_season_region_bin))
+
+# ---------- MODEL DIAGNOSTIC PLOTS ----------
+
+# Predicted vs actual PLU 4225 sales: overall model fit.
+p_pred_vs_actual <- ggplot(
+  large_avocados,
+  aes(x = pred_sales, y = plu4225)
+) +
+  geom_point(alpha = 0.6, color = "darkgreen") +
+  geom_abline(
+    intercept = 0, slope = 1,
+    linetype  = "dashed", color = "red"
+  ) +
+  labs(
+    title = "Predicted vs Actual Large Avocado Sales (PLU 4225)",
+    x = "Predicted Sales (units, PLU 4225)",
+    y = "Actual Sales (units, PLU 4225)"
+  ) +
+  theme_minimal()
+
+p_pred_vs_actual
+save_plot("predicted_vs_actual_large_avocado_sales.png")
+
+# Predicted sales by season
+p_pred_by_season <- ggplot(
+  large_avocados,
+  aes(x = season, y = pred_sales, fill = season)
+) +
+  geom_boxplot() +
+  labs(
+    title = "Predicted Large Avocado Sales by Season",
+    x = "Season",
+    y = "Predicted Sales (units, PLU 4225)"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+p_pred_by_season
+save_plot("predicted_sales_by_season.png")
+
+# Predicted sales by type (conventional vs organic)
+p_pred_by_type <- ggplot(
+  large_avocados,
+  aes(x = factor(type_bin),
+      y = pred_sales,
+      fill = factor(type_bin))
+) +
+  geom_boxplot() +
+  scale_x_discrete(labels = c("Conventional", "Organic")) +
+  labs(
+    title = "Predicted Large Avocado Sales by Type",
+    x = "Avocado Type",
+    y = "Predicted Sales (units, PLU 4225)"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+p_pred_by_type
+save_plot("predicted_sales_by_type.png")
+
+# Predicted sales by region
+p_pred_by_region <- ggplot(
+  large_avocados,
+  aes(x = reorder(region, pred_sales, FUN = median),
+      y = pred_sales, fill = region)
+) +
+  geom_boxplot() +
+  coord_flip() +
+  labs(
+    title = "Predicted Large Avocado Sales by Region",
+    x = "Region",
+    y = "Predicted Sales (units, PLU 4225)"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+p_pred_by_region
+save_plot("predicted_sales_by_region.png")
+
+# Actual vs predicted by season (distribution comparison)
+p_actual_vs_pred_season <- ggplot(large_avocados, aes(x = season)) +
+  geom_boxplot(aes(y = plu4225,  fill = "Actual"),    alpha = 0.5) +
+  geom_boxplot(aes(y = pred_sales, fill = "Predicted"), alpha = 0.5) +
+  labs(
+    title = "Actual vs Predicted Large Avocado Sales by Season",
+    x = "Season",
+    y = "PLU 4225 Sales (units)",
+    fill = ""
+  ) +
+  theme_minimal()
+
+p_actual_vs_pred_season
+save_plot("actual_vs_predicted_sales_by_season.png")
+
+# ---------- RESIDUALS VS FITTED ----------
+
+# Residual plot: check for non-linearity, heteroscedasticity, and outliers.
+residual_df <- large_avocados |>
+  mutate(
+    residuals = plu4225 - pred_sales
+  )
+
+p_resid <- ggplot(
+  residual_df,
+  aes(x = pred_sales, y = residuals)
+) +
+  geom_point(alpha = 0.5) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(
+    title = "Residuals vs Fitted for Large Avocado Sales Model",
+    x = "Predicted Sales (units, PLU 4225)",
+    y = "Residuals (units, PLU 4225)"
+  ) +
+  theme_minimal()
+
+p_resid
+save_plot("residuals_vs_fitted_large_avocado_sales.png")
+
+# ---------- SAVE LINEAR MODEL & DEMO PREDICTIONS ----------
+
+best_model <- lg_avo_mod_season_region_bin
+
+model_path <- file.path(models_dir, "large_avocado_sales_best_lm.rds")
+saveRDS(best_model, file = model_path)
+
+cat("\nSaved best linear model to:", model_path, "\n")
+
+# ---------- DEMO PREDICTIONS (WITH ERRORS) ----------
+
+# Sample rows with actual vs predicted values and error metrics.
+demo_sample <- dplyr::slice_sample(large_avocados, n = 5)
+
+demo_preds <- predict(best_model, newdata = demo_sample)
+
+demo_results <- demo_sample |>
+  mutate(
+    actual_plu4225    = plu4225,
+    predicted_plu4225 = round(demo_preds, 2),
+    abs_error         = predicted_plu4225 - actual_plu4225,
+    pct_error         = round(abs(abs_error) / actual_plu4225 * 100, 1)
+  ) |>
+  select(
+    region,
+    season,
+    type_bin,
+    actual_plu4225,
+    predicted_plu4225,
+    abs_error,
+    pct_error
+  )
+
+cat("\nDemo predictions (sample rows with error) - Linear Model:\n")
+print(demo_results)
+
+readr::write_csv(demo_results, file.path(outputs_dir, "demo_predictions_sample.csv"))
+
+# ---------- OVERALL ERROR SUMMARY FOR BEST LINEAR MODEL ----------
+
+# Compute predictions for the full dataset used in modeling
+error_df <- large_avocados |>
+  mutate(
+    pred_sales = predict(best_model, newdata = large_avocados),
+    abs_error  = pred_sales - plu4225,
+    pct_error  = abs(abs_error) / plu4225 * 100
+  )
+
+# Summaries (MAPE capped at 500% to avoid extreme tiny denominators)
+# MAE  = average absolute error in units of PLU 4225 volume.
+# RMSE = penalizes larger errors more strongly.
+# MAPE = average percentage error (excluding extreme cases).
+error_summary <- error_df |>
+  summarise(
+    MAE  = round(mean(abs(abs_error), na.rm = TRUE), 2),
+    RMSE = round(sqrt(mean(abs_error^2, na.rm = TRUE)), 2),
+    MAPE = round(mean(pct_error[pct_error < 500], na.rm = TRUE), 2)
+  )
+
+cat("\n --------------- OVERALL LINEAR MODEL PERFORMANCE ---------------\n")
+print(error_summary)
+cat("\n(Note: MAPE excludes cases above 500% due to extremely small actual values.)\n")
+
+readr::write_csv(error_summary, file.path(outputs_dir, "overall_model_performance_summary.csv"))
+
+# ===================================================================
+# RANDOM FOREST FOR PLU 4225 SALES
+# ===================================================================
+
+# Goal: Provide a tree-based, non-linear benchmark for PLU 4225 sales
+# using the same core predictors (season, region, type_bin), and compare
+# performance vs the linear regression.
+rf_data <- large_avocados |>
+  select(plu4225, season, region, type_bin) |>
+  drop_na() |>
+  mutate(
+    season  = factor(season),
+    region  = factor(region),
+    type_bin = factor(type_bin)
+  )
+
+set.seed(42)
+
+rf_model <- randomForest(
+  plu4225 ~ season + region + type_bin,
+  data       = rf_data,
+  ntree      = 500,
+  mtry       = 3,
+  importance = TRUE
+)
+
+cat("\nRandom Forest model summary:\n")
+print(rf_model)
+
+# Save RF model
+rf_model_path <- file.path(models_dir, "large_avocado_sales_rf.rds")
+saveRDS(rf_model, rf_model_path)
+cat("\nSaved random forest model to:", rf_model_path, "\n")
+
+# Predictions and error metrics
+rf_preds <- predict(rf_model, newdata = rf_data)
+
+rf_error_df <- rf_data |>
+  mutate(
+    pred_sales = rf_preds,
+    abs_error  = pred_sales - plu4225,
+    pct_error  = abs(abs_error) / plu4225 * 100
+  )
+
+rf_error_summary <- rf_error_df |>
+  summarise(
+    MAE  = round(mean(abs(abs_error), na.rm = TRUE), 2),
+    RMSE = round(sqrt(mean(abs_error^2, na.rm = TRUE)), 2),
+    MAPE = round(mean(pct_error[pct_error < 500], na.rm = TRUE), 2)
+  )
+
+cat("\n --- RANDOM FOREST MODEL PERFORMANCE (PLU 4225) ---\n")
+print(rf_error_summary)
+cat("\n(Compare these metrics to the linear model performance above.)\n")
+
+readr::write_csv(
+  rf_error_summary,
+  file.path(outputs_dir, "rf_model_performance_summary.csv")
+)
+
+# Variable importance
+rf_varimp <- importance(rf_model)
+cat("\nRandom Forest variable importance (IncNodePurity):\n")
+print(rf_varimp)
+
+# Variable importance plot
+rf_varimp_df <- as.data.frame(rf_varimp) |>
+  tibble::rownames_to_column("predictor")
+
+p_rf_varimp <- rf_varimp_df |>
+  ggplot(aes(x = reorder(predictor, IncNodePurity), y = IncNodePurity)) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Random Forest Variable Importance (PLU 4225 Sales)",
+    x = "Predictor",
+    y = "IncNodePurity"
+  ) +
+  theme_minimal()
+
+p_rf_varimp
+save_plot("rf_variable_importance_plu4225.png")
+
+# ----------------------------------------------------
+# PIPELINE COMPLETE
+# ----------------------------------------------------
+
+cat("\n--------------------------------------------------\n")
+cat("Pipeline complete:\n")
+cat("- Data cleaning & descriptive analysis\n")
+cat("- Price, volume, and regional demand exploration\n")
+cat("- Logistic regression (organic vs conventional)\n")
+cat("- Linear regression (PLU 4225 large avocado sales)\n")
+cat("- Random Forest benchmark model\n")
+cat("--------------------------------------------------\n")
