@@ -9,7 +9,7 @@ End-to-end analysis of Boston neighborhood housing data to support property valu
 - Do nonlinear relationships improve prediction accuracy?
 
 ## Data
-- **Source:** Kaggle (Boston Housing dataset)
+- **Source:** Kaggle (Boston Housing dataset): boston_housing_data.csv
 - **Rows:** 506 neighborhoods
 - **Key fields:** RM, LSTAT, NOX, TAX, INDUS, DIS, PTRATIO, CHAS, MEDV
 - **Missingness:** None (all fields complete)
