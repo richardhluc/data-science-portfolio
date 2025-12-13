@@ -1,4 +1,4 @@
-# Healthcare Market Insights from Socioeconomic Segmentation (BRFSS 2021)
+# Socioeconomic Health Insurance Analysis
 
 ## Overview
 End-to-end analysis of BRFSS 2021 survey data to examine how income, education, and home arrangement relate to primary health insurance type. The project combines exploratory segmentation, association testing, interpretable multi-class modeling, and a machine-learning benchmark.
