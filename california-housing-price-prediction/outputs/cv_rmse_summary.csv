@@ -1,0 +1,4 @@
+model,cv_rmse
+LinearRegression,67994.06678091262
+DecisionTree,70398.45855786013
+RandomForest (baseline),49575.78687742332
