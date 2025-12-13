@@ -11,7 +11,7 @@ End-to-end SQL analytics project analyzing U.S. home value trends using Zillowâ€
 - What regions show sustained momentum through positive growth streaks?
 
 ## Data
-- **Source:** Zillow (Home Value Index (ZHVI) dataset)
+- **Source:** Zillow (Home Value Index (ZHVI) dataset): zillow_zhvi.csv, zillow_zhvi_clean.csv
 - **Core entities:**
   - Regions (state-level aggregation)
   - Monthly time-series home values (ZHVI)
