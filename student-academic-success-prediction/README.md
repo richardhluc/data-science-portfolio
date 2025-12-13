@@ -1,7 +1,7 @@
 # Student Academic Success Prediction
 
 ## Overview
-End-to-end modeling of Portuguese secondary school data to predict final student performance (G3) and identify at-risk students. The project combines exploratory analysis, statistical screening, and regression modeling to support early academic intervention.
+End-to-end modeling of secondary school data to predict final student performance (G3) and identify at-risk students. The project combines exploratory analysis, statistical screening, and regression modeling to support early academic intervention.
 
 ## Business Questions
 - Which factors most strongly predict final student grades?
