@@ -1,4 +1,4 @@
-# Restaurant Visitor Forecasting (Recruit Dataset)
+# Restaurant Visitor Demand Forecasting
 
 ## Overview
 End-to-end demand forecasting pipeline using historical restaurant visits, store metadata, and calendar signals to predict daily customer traffic and support staffing and inventory planning.
@@ -9,7 +9,7 @@ End-to-end demand forecasting pipeline using historical restaurant visits, store
 - Which model performs best under time-based validation?
 
 ## Data
-- **Sources:** `air_visit_data`, `air_store_info`, `date_info`
+- **Sources:** Kaggle (Restaurant Visitor dataset): `air_visit_data`, `air_store_info`, `date_info`
 - **Merged dataset:** 252,108 rows
 - **Target:** `visitors`
 - **Cleaning:** encoding fixes
@@ -33,4 +33,3 @@ End-to-end demand forecasting pipeline using historical restaurant visits, store
 
 ## Tech Stack
 Python · pandas · NumPy · matplotlib · scikit-learn · joblib
-
