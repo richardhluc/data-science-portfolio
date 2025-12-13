@@ -1,4 +1,4 @@
-# Academic Success Prediction — Portuguese Secondary Students
+# Student Academic Success Prediction
 
 ## Overview
 End-to-end modeling of Portuguese secondary school data to predict final student performance (G3) and identify at-risk students. The project combines exploratory analysis, statistical screening, and regression modeling to support early academic intervention.
@@ -9,7 +9,7 @@ End-to-end modeling of Portuguese secondary school data to predict final student
 - Can a regression model be used to flag students at academic risk?
 
 ## Data
-- **Source:** UCI Machine Learning Repository — Student Performance dataset
+- **Source:** UCI Machine Learning Repository (Student Performance dataset)
 - **Rows:** 395 students
 - **Key fields:** G1, G2, G3, absences, age, parental education, family & school factors
 - **Missingness:** Minor (handled via imputation)
