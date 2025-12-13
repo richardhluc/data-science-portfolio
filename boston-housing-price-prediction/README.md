@@ -1,5 +1,8 @@
 BOSTON HOUSING PRICE INSIGHTS
-OVERVIEW: End-to-end analysis of Boston neighborhood housing data to support property valuation, lending risk assessment, and urban planning. The project combines exploratory analysis, regularized regression, and nonlinear modeling to explain and predict median home prices.
+
+OVERVIEW: End-to-end analysis of Boston neighborhood housing data to support property valuation, lending risk assessment, and urban
+planning. The project combines exploratory analysis, regularized regression, and nonlinear modeling to explain and predict median home
+prices.
 
 BUSINESS QUESTIONS
 Which neighborhood factors most strongly drive home prices?
