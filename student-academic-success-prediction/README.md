@@ -32,7 +32,7 @@ End-to-end modeling of Portuguese secondary school data to predict final student
 ## Artifacts
 - **Figures:** `/figures/`
 - **Tables:** `/outputs/`
-- **Models:** `/models/portuguese_school_best_svm_with_grades.pkl`
+- **Models:** `/models/school_best_svm_with_grades.pkl`
 
 ## Tech Stack
 Python · pandas · NumPy · scikit-learn · scipy · matplotlib · seaborn · joblib
