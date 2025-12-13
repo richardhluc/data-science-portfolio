@@ -11,7 +11,7 @@ End-to-end SQL analytics project analyzing restaurant orders, members, and menu 
 - Which meal combinations are most frequently purchased together?
 
 ## Data
-- **Source:** Kaggle (Restaurant Members and Orders dataset)
+- **Source:** Kaggle (Restaurant Members and Orders dataset): cities.csv, meal_types.csv, meals.csv, members.csv, monthly_member_totals.csv, order_details.csv, orders.csv, restaurant_types.csv, restaurants.csv, serve_types.csv
 - **Core entities:** orders, order details, restaurants, members, meals, meal types, serve types, cities
 - **Schema design:**
   - Normalized relational model with fact tables (`orders`, `order_details`)
