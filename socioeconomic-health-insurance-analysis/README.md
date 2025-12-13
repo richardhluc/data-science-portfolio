@@ -10,7 +10,7 @@ End-to-end analysis of BRFSS 2021 survey data to examine how income, education, 
 - Can insurance type be predicted from income, education, and home status?
 
 ## Data
-- **Source:** BRFSS 2021 (`health_data.csv`)
+- **Source:** CDC (BRFSS 2021 dataset): health_data.csv
 - **Rows loaded:** 438,693
 - **Analytic sample:** 334,588 (after valid-code filtering)
 - **Key fields:** PRIMINSR, INCOME3, EDUCA, RENTHOM1
