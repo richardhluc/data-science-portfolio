@@ -1,0 +1,7 @@
+model,cv_rmse
+Linear (with grades),1.8930406477874862
+Linear (without grades),4.376837790855781
+SVR (with grades),2.3683371964342204
+SVR (without grades),4.3177554268776115
+Lasso (with grades),2.1690514380657917
+Lasso (without grades),4.475669724487358

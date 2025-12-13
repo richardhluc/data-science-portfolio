@@ -1,0 +1,5 @@
+index,school,sex,address,famsize,Pstatus,Mjob,Fjob,reason,guardian,schoolsup,famsup,paid,activities,nursery,higher,internet,romantic
+count,395,395,395,395,395,395,395,395,395,395,395,395,395,395,395,395,395
+unique,2,2,2,2,2,5,5,4,3,2,2,2,2,2,2,2,2
+top,GP,F,U,GT3,T,other,other,course,mother,no,yes,no,yes,yes,yes,yes,no
+freq,349,208,307,281,354,141,217,145,273,344,242,214,201,314,375,329,263
