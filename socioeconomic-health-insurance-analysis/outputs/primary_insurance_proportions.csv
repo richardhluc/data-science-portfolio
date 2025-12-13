@@ -1,0 +1,12 @@
+PRIMINSR,n,prop
+Employer-Based,138497,0.4139
+Private,27478,0.0821
+Medicare,98239,0.2936
+Medigap,335,0.001
+Medicaid,21167,0.0633
+CHIP,107,3e-4
+Military,12033,0.036
+Indian Health,1218,0.0036
+State,8832,0.0264
+Other,8951,0.0268
+None,17731,0.053

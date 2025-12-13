@@ -1,0 +1,6 @@
+INCOME3,EDUCA,RENTHOM1,actual_insurance,predicted_insurance
+"$25,000 to < $35,000",College 1-3 Years,Rent,Employer-Based,Employer-Based
+"$50,000 to < $75,000",Grades 12/GED,Rent,Employer-Based,Employer-Based
+"$50,000 to < $75,000",College 1-3 Years,Rent,Employer-Based,Employer-Based
+"$200,000 or more",College 4+ Years,Own,Private,Employer-Based
+"$35,000 to < $50,000",College 1-3 Years,Rent,Military,Employer-Based

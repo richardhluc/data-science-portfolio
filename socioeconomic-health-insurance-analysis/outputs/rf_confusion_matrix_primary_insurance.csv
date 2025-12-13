@@ -1,0 +1,122 @@
+Actual,Predicted,Freq
+None,None,255
+Employer-Based,None,67
+Private,None,28
+Medicare,None,126
+Medigap,None,3
+Medicaid,None,126
+CHIP,None,3
+Military,None,6
+Indian Health,None,5
+State,None,51
+Other,None,27
+None,Employer-Based,1598
+Employer-Based,Employer-Based,24038
+Private,Employer-Based,3767
+Medicare,Employer-Based,9341
+Medigap,Employer-Based,29
+Medicaid,Employer-Based,1252
+CHIP,Employer-Based,8
+Military,Employer-Based,1583
+Indian Health,Employer-Based,102
+State,Employer-Based,840
+Other,Employer-Based,1021
+None,Private,3
+Employer-Based,Private,6
+Private,Private,5
+Medicare,Private,1
+Medigap,Private,0
+Medicaid,Private,1
+CHIP,Private,0
+Military,Private,0
+Indian Health,Private,1
+State,Private,0
+Other,Private,0
+None,Medicare,1451
+Employer-Based,Medicare,3435
+Private,Medicare,1584
+Medicare,Medicare,9900
+Medigap,Medicare,29
+Medicaid,Medicare,2271
+CHIP,Medicare,7
+Military,Medicare,785
+Indian Health,Medicare,107
+State,Medicare,725
+Other,Medicare,733
+None,Medigap,0
+Employer-Based,Medigap,0
+Private,Medigap,0
+Medicare,Medigap,0
+Medigap,Medigap,0
+Medicaid,Medigap,0
+CHIP,Medigap,0
+Military,Medigap,0
+Indian Health,Medigap,0
+State,Medigap,0
+Other,Medigap,0
+None,Medicaid,235
+Employer-Based,Medicaid,111
+Private,Medicaid,111
+Medicare,Medicaid,368
+Medigap,Medicaid,1
+Medicaid,Medicaid,529
+CHIP,Medicaid,0
+Military,Medicaid,30
+Indian Health,Medicaid,9
+State,Medicaid,119
+Other,Medicaid,85
+None,CHIP,0
+Employer-Based,CHIP,0
+Private,CHIP,0
+Medicare,CHIP,0
+Medigap,CHIP,0
+Medicaid,CHIP,0
+CHIP,CHIP,0
+Military,CHIP,0
+Indian Health,CHIP,0
+State,CHIP,0
+Other,CHIP,0
+None,Military,0
+Employer-Based,Military,0
+Private,Military,0
+Medicare,Military,0
+Medigap,Military,0
+Medicaid,Military,0
+CHIP,Military,0
+Military,Military,0
+Indian Health,Military,0
+State,Military,0
+Other,Military,0
+None,Indian Health,0
+Employer-Based,Indian Health,0
+Private,Indian Health,0
+Medicare,Indian Health,0
+Medigap,Indian Health,0
+Medicaid,Indian Health,0
+CHIP,Indian Health,0
+Military,Indian Health,0
+Indian Health,Indian Health,0
+State,Indian Health,0
+Other,Indian Health,0
+None,State,0
+Employer-Based,State,0
+Private,State,0
+Medicare,State,0
+Medigap,State,0
+Medicaid,State,0
+CHIP,State,0
+Military,State,0
+Indian Health,State,0
+State,State,0
+Other,State,0
+None,Other,0
+Employer-Based,Other,0
+Private,Other,0
+Medicare,Other,0
+Medigap,Other,0
+Medicaid,Other,0
+CHIP,Other,0
+Military,Other,0
+Indian Health,Other,0
+State,Other,0
+Other,Other,0

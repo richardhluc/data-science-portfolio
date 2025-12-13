@@ -1,0 +1,4 @@
+test,statistic,df,p_value
+Insurance x Home,29035.106099920427,20,0
+Insurance x Income,96654.99816090544,100,0
+Insurance x Education,31399.67519799432,50,0

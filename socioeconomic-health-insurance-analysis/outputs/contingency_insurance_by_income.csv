@@ -1,0 +1,122 @@
+Var1,Var2,Freq
+Employer-Based,"Less than $10,000",535
+Private,"Less than $10,000",603
+Medicare,"Less than $10,000",2803
+Medigap,"Less than $10,000",22
+Medicaid,"Less than $10,000",3366
+CHIP,"Less than $10,000",5
+Military,"Less than $10,000",178
+Indian Health,"Less than $10,000",91
+State,"Less than $10,000",763
+Other,"Less than $10,000",469
+None,"Less than $10,000",1417
+Employer-Based,"$10,000 to < $15,000",466
+Private,"$10,000 to < $15,000",595
+Medicare,"$10,000 to < $15,000",5248
+Medigap,"$10,000 to < $15,000",14
+Medicaid,"$10,000 to < $15,000",2384
+CHIP,"$10,000 to < $15,000",5
+Military,"$10,000 to < $15,000",336
+Indian Health,"$10,000 to < $15,000",54
+State,"$10,000 to < $15,000",530
+Other,"$10,000 to < $15,000",403
+None,"$10,000 to < $15,000",919
+Employer-Based,"$15,000 to < $20,000",971
+Private,"$15,000 to < $20,000",942
+Medicare,"$15,000 to < $20,000",6332
+Medigap,"$15,000 to < $20,000",22
+Medicaid,"$15,000 to < $20,000",2766
+CHIP,"$15,000 to < $20,000",13
+Military,"$15,000 to < $20,000",448
+Indian Health,"$15,000 to < $20,000",87
+State,"$15,000 to < $20,000",653
+Other,"$15,000 to < $20,000",541
+None,"$15,000 to < $20,000",1510
+Employer-Based,"$20,000 to < $25,000",2291
+Private,"$20,000 to < $25,000",1435
+Medicare,"$20,000 to < $25,000",8795
+Medigap,"$20,000 to < $25,000",27
+Medicaid,"$20,000 to < $25,000",3006
+CHIP,"$20,000 to < $25,000",11
+Military,"$20,000 to < $25,000",692
+Indian Health,"$20,000 to < $25,000",128
+State,"$20,000 to < $25,000",910
+Other,"$20,000 to < $25,000",750
+None,"$20,000 to < $25,000",2087
+Employer-Based,"$25,000 to < $35,000",8326
+Private,"$25,000 to < $35,000",3500
+Medicare,"$25,000 to < $35,000",16513
+Medigap,"$25,000 to < $35,000",66
+Medicaid,"$25,000 to < $35,000",4577
+CHIP,"$25,000 to < $35,000",21
+Military,"$25,000 to < $35,000",1632
+Indian Health,"$25,000 to < $35,000",266
+State,"$25,000 to < $35,000",1808
+Other,"$25,000 to < $35,000",1455
+None,"$25,000 to < $35,000",4029
+Employer-Based,"$35,000 to < $50,000",14872
+Private,"$35,000 to < $50,000",4065
+Medicare,"$35,000 to < $50,000",17055
+Medigap,"$35,000 to < $50,000",54
+Medicaid,"$35,000 to < $50,000",2572
+CHIP,"$35,000 to < $50,000",16
+Military,"$35,000 to < $50,000",2016
+Indian Health,"$35,000 to < $50,000",227
+State,"$35,000 to < $50,000",1425
+Other,"$35,000 to < $50,000",1402
+None,"$35,000 to < $50,000",3072
+Employer-Based,"$50,000 to < $75,000",26316
+Private,"$50,000 to < $75,000",4986
+Medicare,"$50,000 to < $75,000",17687
+Medigap,"$50,000 to < $75,000",59
+Medicaid,"$50,000 to < $75,000",1489
+CHIP,"$50,000 to < $75,000",12
+Military,"$50,000 to < $75,000",2401
+Indian Health,"$50,000 to < $75,000",169
+State,"$50,000 to < $75,000",1165
+Other,"$50,000 to < $75,000",1446
+None,"$50,000 to < $75,000",2346
+Employer-Based,"$75,000 to < $100,000",26207
+Private,"$75,000 to < $100,000",4056
+Medicare,"$75,000 to < $100,000",11397
+Medigap,"$75,000 to < $100,000",34
+Medicaid,"$75,000 to < $100,000",555
+CHIP,"$75,000 to < $100,000",9
+Military,"$75,000 to < $100,000",1707
+Indian Health,"$75,000 to < $100,000",114
+State,"$75,000 to < $100,000",672
+Other,"$75,000 to < $100,000",976
+None,"$75,000 to < $100,000",1176
+Employer-Based,"$100,000 to < $150,000",31309
+Private,"$100,000 to < $150,000",3698
+Medicare,"$100,000 to < $150,000",7804
+Medigap,"$100,000 to < $150,000",21
+Medicaid,"$100,000 to < $150,000",290
+CHIP,"$100,000 to < $150,000",7
+Military,"$100,000 to < $150,000",1602
+Indian Health,"$100,000 to < $150,000",58
+State,"$100,000 to < $150,000",563
+Other,"$100,000 to < $150,000",818
+None,"$100,000 to < $150,000",707
+Employer-Based,"$150,000 to < $200,000",13880
+Private,"$150,000 to < $200,000",1609
+Medicare,"$150,000 to < $200,000",2460
+Medigap,"$150,000 to < $200,000",7
+Medicaid,"$150,000 to < $200,000",78
+CHIP,"$150,000 to < $200,000",3
+Military,"$150,000 to < $200,000",598
+Indian Health,"$150,000 to < $200,000",13
+State,"$150,000 to < $200,000",192
+Other,"$150,000 to < $200,000",395
+None,"$150,000 to < $200,000",242
+Employer-Based,"$200,000 or more",13324
+Private,"$200,000 or more",1989
+Medicare,"$200,000 or more",2145
+Medigap,"$200,000 or more",9
+Medicaid,"$200,000 or more",84
+CHIP,"$200,000 or more",5
+Military,"$200,000 or more",423
+Indian Health,"$200,000 or more",11
+State,"$200,000 or more",151
+Other,"$200,000 or more",296
+None,"$200,000 or more",226

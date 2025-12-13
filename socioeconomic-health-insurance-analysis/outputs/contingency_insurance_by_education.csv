@@ -1,0 +1,67 @@
+Var1,Var2,Freq
+Employer-Based,Never/Only Kindergarten,70
+Private,Never/Only Kindergarten,15
+Medicare,Never/Only Kindergarten,71
+Medigap,Never/Only Kindergarten,2
+Medicaid,Never/Only Kindergarten,36
+CHIP,Never/Only Kindergarten,0
+Military,Never/Only Kindergarten,3
+Indian Health,Never/Only Kindergarten,1
+State,Never/Only Kindergarten,19
+Other,Never/Only Kindergarten,18
+None,Never/Only Kindergarten,110
+Employer-Based,Grades 1-8,650
+Private,Grades 1-8,298
+Medicare,Grades 1-8,1525
+Medigap,Grades 1-8,12
+Medicaid,Grades 1-8,744
+CHIP,Grades 1-8,5
+Military,Grades 1-8,51
+Indian Health,Grades 1-8,14
+State,Grades 1-8,303
+Other,Grades 1-8,222
+None,Grades 1-8,1505
+Employer-Based,Grades 9-11,1889
+Private,Grades 9-11,768
+Medicare,Grades 9-11,3782
+Medigap,Grades 9-11,14
+Medicaid,Grades 9-11,2187
+CHIP,Grades 9-11,9
+Military,Grades 9-11,207
+Indian Health,Grades 9-11,89
+State,Grades 9-11,595
+Other,Grades 9-11,493
+None,Grades 9-11,1877
+Employer-Based,Grades 12/GED,25538
+Private,Grades 12/GED,6472
+Medicare,Grades 12/GED,26542
+Medigap,Grades 12/GED,118
+Medicaid,Grades 12/GED,7610
+CHIP,Grades 12/GED,32
+Military,Grades 12/GED,2850
+Indian Health,Grades 12/GED,384
+State,Grades 12/GED,2713
+Other,Grades 12/GED,2484
+None,Grades 12/GED,6361
+Employer-Based,College 1-3 Years,35563
+Private,College 1-3 Years,7909
+Medicare,College 1-3 Years,28498
+Medigap,College 1-3 Years,89
+Medicaid,College 1-3 Years,6617
+CHIP,College 1-3 Years,39
+Military,College 1-3 Years,4239
+Indian Health,College 1-3 Years,450
+State,College 1-3 Years,2610
+Other,College 1-3 Years,2507
+None,College 1-3 Years,4681
+Employer-Based,College 4+ Years,74787
+Private,College 4+ Years,12016
+Medicare,College 4+ Years,37821
+Medigap,College 4+ Years,100
+Medicaid,College 4+ Years,3973
+CHIP,College 4+ Years,22
+Military,College 4+ Years,4683
+Indian Health,College 4+ Years,280
+State,College 4+ Years,2592
+Other,College 4+ Years,3227
+None,College 4+ Years,3197

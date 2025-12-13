@@ -1,0 +1,45 @@
+INCOME3,EDUCA,RENTHOM1,InsuranceType,Prob
+"Less than $10,000",College 4+ Years,Own,None,0.04417317662036952
+"Less than $10,000",College 4+ Years,Own,Employer-Based,0.044105217758524266
+"Less than $10,000",College 4+ Years,Own,Medicare,0.5803211810037642
+"Less than $10,000",College 4+ Years,Own,Medicaid,0.14951861769059235
+"$10,000 to < $15,000",College 4+ Years,Own,None,0.022861690477971906
+"$10,000 to < $15,000",College 4+ Years,Own,Employer-Based,0.048635167885062613
+"$10,000 to < $15,000",College 4+ Years,Own,Medicare,0.664528797919273
+"$10,000 to < $15,000",College 4+ Years,Own,Medicaid,0.10462386852773994
+"$15,000 to < $20,000",College 4+ Years,Own,None,0.02838119440142566
+"$15,000 to < $20,000",College 4+ Years,Own,Employer-Based,0.03920089268923198
+"$15,000 to < $20,000",College 4+ Years,Own,Medicare,0.7096659683488815
+"$15,000 to < $20,000",College 4+ Years,Own,Medicaid,0.07650623103473271
+"$20,000 to < $25,000",College 4+ Years,Own,None,0.027247341654756535
+"$20,000 to < $25,000",College 4+ Years,Own,Employer-Based,0.11767722956670067
+"$20,000 to < $25,000",College 4+ Years,Own,Medicare,0.6205340532207426
+"$20,000 to < $25,000",College 4+ Years,Own,Medicaid,0.07371790973135386
+"$25,000 to < $35,000",College 4+ Years,Own,None,0.03450399796902655
+"$25,000 to < $35,000",College 4+ Years,Own,Employer-Based,0.17444540127194855
+"$25,000 to < $35,000",College 4+ Years,Own,Medicare,0.5372110284625322
+"$25,000 to < $35,000",College 4+ Years,Own,Medicaid,0.05528103989891856
+"$35,000 to < $50,000",College 4+ Years,Own,None,0.030401689086793325
+"$35,000 to < $50,000",College 4+ Years,Own,Employer-Based,0.30298249454984216
+"$35,000 to < $50,000",College 4+ Years,Own,Medicare,0.4519743212634806
+"$35,000 to < $50,000",College 4+ Years,Own,Medicaid,0.030118927487292887
+"$50,000 to < $75,000",College 4+ Years,Own,None,0.022781616721534472
+"$50,000 to < $75,000",College 4+ Years,Own,Employer-Based,0.4073751717206074
+"$50,000 to < $75,000",College 4+ Years,Own,Medicare,0.3935813023900392
+"$50,000 to < $75,000",College 4+ Years,Own,Medicaid,0.012899661176293334
+"$75,000 to < $100,000",College 4+ Years,Own,None,0.020378447973975942
+"$75,000 to < $100,000",College 4+ Years,Own,Employer-Based,0.5182876887363753
+"$75,000 to < $100,000",College 4+ Years,Own,Medicare,0.3017293343569493
+"$75,000 to < $100,000",College 4+ Years,Own,Medicaid,0.009660809396285323
+"$100,000 to < $150,000",College 4+ Years,Own,None,0.011625759448818605
+"$100,000 to < $150,000",College 4+ Years,Own,Employer-Based,0.6308184721447346
+"$100,000 to < $150,000",College 4+ Years,Own,Medicare,0.20750019876878054
+"$100,000 to < $150,000",College 4+ Years,Own,Medicaid,0.00525659089404369
+"$150,000 to < $200,000",College 4+ Years,Own,None,0.006150780654397214
+"$150,000 to < $200,000",College 4+ Years,Own,Employer-Based,0.7013212909672736
+"$150,000 to < $200,000",College 4+ Years,Own,Medicare,0.13521249274458155
+"$150,000 to < $200,000",College 4+ Years,Own,Medicaid,2.1495003456453897e-4
+"$200,000 or more",College 4+ Years,Own,None,0.01103452500279184
+"$200,000 or more",College 4+ Years,Own,Employer-Based,0.7094422793979134
+"$200,000 or more",College 4+ Years,Own,Medicare,0.12057330852095553
+"$200,000 or more",College 4+ Years,Own,Medicaid,2.498369133728145e-4

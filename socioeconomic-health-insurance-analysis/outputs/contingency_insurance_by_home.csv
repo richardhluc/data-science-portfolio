@@ -1,0 +1,34 @@
+Var1,Var2,Freq
+Employer-Based,Own,105852
+Private,Own,20199
+Medicare,Own,80156
+Medigap,Own,216
+Medicaid,Own,7973
+CHIP,Own,45
+Military,Own,8728
+Indian Health,Own,755
+State,Own,4630
+Other,Own,5752
+None,Own,7329
+Employer-Based,Rent,28738
+Private,Rent,5874
+Medicare,Rent,15531
+Medigap,Rent,105
+Medicaid,Rent,11371
+CHIP,Rent,52
+Military,Rent,2827
+Indian Health,Rent,387
+State,Rent,3635
+Other,Rent,2741
+None,Rent,9181
+Employer-Based,Other,3907
+Private,Other,1405
+Medicare,Other,2552
+Medigap,Other,14
+Medicaid,Other,1823
+CHIP,Other,10
+Military,Other,478
+Indian Health,Other,76
+State,Other,567
+Other,Other,458
+None,Other,1221
