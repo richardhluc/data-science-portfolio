@@ -1,0 +1,6 @@
+term,std_coef
+(Intercept),NA
+cholesterol,0.8188516661354109
+total_carb,0.18027231328184984
+restaurantMcdonalds,-0.14408234475573908
+restaurantSonic,0.13173619329639227
