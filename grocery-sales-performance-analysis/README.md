@@ -56,5 +56,5 @@ End-to-end SQL analytics project analyzing grocery sales transactions to support
   - Product Mix by Employee
 
 ## Tech Stack
-SQL (PostgreSQL-style) · Relational Data Modeling · Analytical SQL · Window Functions · Tableau
+SQL (PostgreSQL) · Relational Data Modeling · Analytical SQL · Window Functions · Tableau
 
