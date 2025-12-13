@@ -9,7 +9,7 @@ End-to-end modeling of secondary school data to predict final student performanc
 - Can a regression model be used to flag students at academic risk?
 
 ## Data
-- **Source:** UCI Machine Learning Repository (Student Performance dataset)
+- **Source:** UCI Machine Learning Repository (Student Performance dataset): student_academic_success_data.csv
 - **Rows:** 395 students
 - **Key fields:** G1, G2, G3, absences, age, parental education, family & school factors
 - **Missingness:** Minor (handled via imputation)
